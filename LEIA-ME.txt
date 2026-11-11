@@ -1,0 +1,34 @@
+ATENDIMENTOS COM IA - BUSS & HACKBARTH ADVOGADOS
+=================================================
+
+COMO INSTALAR (uma vez so)
+1. De dois cliques em "instalar.bat".
+   - Se o Python nao estiver instalado, ele e instalado automaticamente (pode pedir confirmacao do Windows).
+   - Sera pedido o e-mail, o nome e a senha do primeiro usuario (administrador).
+2. No final, o Bloco de Notas abre o arquivo ".env". Preencha:
+      OPENAI_API_KEY=   (a chave da sua conta OpenAI)
+      OPENAI_ANALYSIS_MODEL=   (modelo de analise escolhido)
+   Opcional: troque OPENAI_TRANSCRIPTION_MODEL=gpt-4o-transcribe por gpt-transcribe
+   (a OpenAI informa que o gpt-4o-transcribe sera desligado em 26/02/2027).
+   Salve e feche.
+
+COMO USAR
+- De dois cliques em "iniciar.bat". O navegador abre em http://localhost:8000.
+- Mantenha a janela preta aberta enquanto usar o sistema.
+- Use o Chrome ou o Edge e permita o microfone quando o navegador pedir.
+- Funciona NESTE computador (localhost). Para outros computadores acessarem pela rede
+  e preciso configurar HTTPS - peca ajuda antes.
+
+OUTROS ARQUIVOS
+- criar_usuario.bat ........ cria outros usuarios (advogado, assistente ou admin)
+- iniciar_com_windows.bat .. faz o sistema iniciar sozinho quando o Windows liga
+- README.md ................ documentacao tecnica completa
+
+SEGURANCA E BACKUP
+- Os documentos ficam criptografados na pasta "storage". INCLUA no backup.
+- O audio temporario fica em "storage_audio_tmp". NAO inclua no backup.
+- O banco de dados fica em "data". INCLUA no backup.
+- O arquivo ".env" tem a chave de criptografia: guarde uma copia em local seguro.
+  Sem ela os documentos nao podem ser lidos. Nunca compartilhe o .env.
+- Recomendado: ativar o BitLocker no Windows e usar senha no usuario do computador.
+- Nao desligue nem coloque o computador para suspender durante um atendimento.

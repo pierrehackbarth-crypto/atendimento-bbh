@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: atendimento
+      POSTGRES_USER: atendimento
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    restart: unless-stopped
+  app:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://atendimento:${POSTGRES_PASSWORD}@db:5432/atendimento
+      STORAGE_DIR: /data/storage
+      STORAGE_AUDIO_DIR: /data/audio_tmp
+      RUN_WORKER_IN_PROCESS: "false"
+    volumes: [storage:/data/storage, audio_tmp:/data/audio_tmp]
+    depends_on: [db]
+    ports: ["127.0.0.1:8000:8000"]   # publicar atrás de proxy HTTPS (Caddy/Nginx); o microfone exige https
+    restart: unless-stopped
+  worker:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://atendimento:${POSTGRES_PASSWORD}@db:5432/atendimento
+      STORAGE_DIR: /data/storage
+      STORAGE_AUDIO_DIR: /data/audio_tmp
+    volumes: [storage:/data/storage, audio_tmp:/data/audio_tmp]
+    command: ["python", "-m", "app.worker"]
+    depends_on: [db, app]
+    restart: unless-stopped
+volumes:
+  pgdata: {}
+  storage: {}      # documentos e textos (criptografados) – incluir no backup
+  audio_tmp: {}    # áudio temporário – NÃO incluir no backup

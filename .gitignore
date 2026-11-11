@@ -1,0 +1,10 @@
+# segredos e dados de clientes (LGPD) nunca vão para o GitHub
+.env
+migracao/
+data/
+storage/
+*.db
+*.sqlite*
+.venv/
+__pycache__/
+*.pyc
