@@ -21,14 +21,9 @@ async function api(path, opt = {}) {
 }
 
 /* ---------------- login e navegação ---------------- */
-function showLogin(msg) {
-  $("#who").innerHTML = "";
-  $("#view").innerHTML = `<form class="card" id="loginF" style="max-width:380px;margin:40px auto"><h2>Entrar</h2>${msg ? `<div class="al bad">${esc(msg)}</div>` : ""}
-  <label>E-mail<input type="email" id="lEmail" required autocomplete="username"></label>
-  <label>Senha<input type="password" id="lPw" required autocomplete="current-password"></label><button class="btn pri">Entrar</button></form>`;
-  $("#loginF").onsubmit = async e => { e.preventDefault();
-    try { const r = await fetch("/api/login", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: $("#lEmail").value, password: $("#lPw").value }) });
-      if (!r.ok) return showLogin("E-mail ou senha inválidos"); if (goNext()) return; await boot(); } catch (_) { showLogin("Não foi possível entrar"); } };
+function showLogin() {
+  // a entrada é a tela do THANOS; depois de entrar, volta para este módulo
+  location.href = "/?next=" + encodeURIComponent("/atendimento" + location.hash);
 }
 function goNext() { const n = new URLSearchParams(location.search).get("next"); if (n && /^\/[a-z]/i.test(n)) { location.href = n; return true; } return false; }
 async function boot() {
@@ -36,8 +31,8 @@ async function boot() {
   catch (_) { return showLogin(); }
   if (goNext()) return;
   const P = ME.perms || {};
-  $("#who").innerHTML = `${P.fichas_ver ? `<a class="btn" href="/ficha/">Fichas de atendimento</a>` : ""}${ME.role === "admin" ? `<a class="btn" href="/usuarios">Usuários</a>` : ""}<span>${esc(ME.name)}</span><button class="btn" id="sair">Sair</button>`;
-  $("#sair").onclick = async () => { await api("/api/logout", { method: "POST" }).catch(() => {}); showLogin(); };
+  $("#who").innerHTML = `${P.fichas_ver ? `<a class="btn" href="/ficha/">Fichas de atendimento</a>` : ""}${ME.role === "admin" ? `<a class="btn" href="/usuarios">Usuários</a>` : ""}<a class="btn" href="/">THANOS</a><span>${esc(ME.name)}</span><button class="btn" id="sair">Sair</button>`;
+  $("#sair").onclick = async () => { await api("/api/logout", { method: "POST" }).catch(() => {}); location.href = "/"; };
   if (!P.gravacao) {
     if (P.fichas_ver) { location.href = "/ficha/"; return; }
     $("#view").innerHTML = `<div class="card"><h2>Sem acesso</h2><p>Seu usuário ainda não tem permissões. Peça ao administrador.</p></div>`; return;

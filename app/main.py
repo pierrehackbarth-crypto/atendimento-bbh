@@ -36,7 +36,7 @@ async def lifespan(app):
     _stop.set()
 
 
-app = FastAPI(title="Atendimentos com IA – Buss & Hackbarth", lifespan=lifespan, docs_url=None, redoc_url=None)
+app = FastAPI(title="THANOS – Atendimento (módulo vermelho) – Buss & Hackbarth", lifespan=lifespan, docs_url=None, redoc_url=None)
 
 
 @app.middleware("http")
@@ -521,4 +521,11 @@ def usuarios_page():
 
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(STATIC, "index.html"))
+    """THANOS: tela de entrada e painel de módulos (cada joia é um módulo)."""
+    return FileResponse(os.path.join(STATIC, "thanos", "index.html"), headers={"Cache-Control": "no-store"})
+
+
+@app.get("/atendimento")
+def atendimento_page():
+    """Módulo vermelho (Atendimento): gravação e transcrição com IA."""
+    return FileResponse(os.path.join(STATIC, "index.html"), headers={"Cache-Control": "no-store"})

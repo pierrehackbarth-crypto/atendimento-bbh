@@ -6,7 +6,7 @@ const BASE = process.env.BASE || 'http://127.0.0.1:8899';
   const ctx = await b.newContext({ permissions: ['microphone'] }); const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message));
   const log = (...a) => console.log(...a);
-  await p.goto(BASE); await p.fill('#lEmail', 'a@x.com'); await p.fill('#lPw', 'senha-segura-1'); await p.click('#loginF button');
+  await p.goto(BASE + '/atendimento'); await p.fill('#lEmail', 'a@x.com'); await p.fill('#lPw', 'senha-segura-1'); await p.click('#enter');
   await p.waitForSelector('#q'); await p.fill('#q', 'Maria E2E'); await p.click('#novoCli');
   await p.waitForSelector('#novoAt'); await p.click('#novoAt'); await p.waitForSelector('#consent');
   log('start desabilitado sem consentimento:', await p.isDisabled('#bStart'));
@@ -38,11 +38,11 @@ const BASE = process.env.BASE || 'http://127.0.0.1:8899';
   // microfone negado
   const ctx2 = await b.newContext(); const p2 = await ctx2.newPage();
   await p2.addInitScript(() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('x'), { name: 'NotAllowedError' })); });
-  await p2.goto(BASE); await p2.fill('#lEmail', 'a@x.com'); await p2.fill('#lPw', 'senha-segura-1'); await p2.click('#loginF button'); await p2.waitForSelector('#q');
+  await p2.goto(BASE + '/atendimento'); await p2.fill('#lEmail', 'a@x.com'); await p2.fill('#lPw', 'senha-segura-1'); await p2.click('#enter'); await p2.waitForSelector('#q');
   await p2.click('.list a'); await p2.click('#novoAt'); await p2.check('#consent'); await p2.waitForFunction(() => !document.querySelector('#bStart').disabled);
   await p2.click('#bStart'); await p2.waitForSelector('text=Permissão do microfone negada'); log('microfone negado tratado: ok');
   // outro usuário não acessa
-  const ctx3 = await b.newContext(); const p3 = await ctx3.newPage(); await p3.goto(BASE); await p3.fill('#lEmail', 'b@x.com'); await p3.fill('#lPw', 'senha-segura-2'); await p3.click('#loginF button'); await p3.waitForSelector('#q');
+  const ctx3 = await b.newContext(); const p3 = await ctx3.newPage(); await p3.goto(BASE + '/atendimento'); await p3.fill('#lEmail', 'b@x.com'); await p3.fill('#lPw', 'senha-segura-2'); await p3.click('#enter'); await p3.waitForSelector('#q');
   const url = p.url(); await p3.goto(url); await p3.waitForTimeout(800); log('usuário B bloqueado:', /não encontrado/i.test(await p3.textContent('#view')));
   log(errs.join('\n') || 'sem erros de página'); await b.close();
 })().catch(e => { console.error('FALHA', e.message); process.exit(1); });
