@@ -149,13 +149,13 @@
       const tools = document.querySelector(".side-tools");
       if (tools && !document.querySelector(".srv-links")) {
         const d = document.createElement("div"); d.className = "srv-links";
-        d.innerHTML = (P.gravacao ? '<a class="btn" href="/">Gravação</a>' : "") +
+        d.innerHTML = '<a class="btn" href="/">THANOS</a>' + (P.gravacao ? '<a class="btn" href="/atendimento">Gravação</a>' : "") +
           (m.role === "admin" ? '<a class="btn" href="/usuarios">Usuários</a>' : "") +
           '<a class="btn" href="#" id="srvSair">Sair</a>';
         tools.appendChild(d);
         d.querySelector("#srvSair").onclick = async e => { e.preventDefault();
           await fetch("/api/logout", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": CSRF } }).catch(() => {});
-          location.href = "/?next=/ficha/"; };
+          location.href = "/"; };
       }
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", add); else add();

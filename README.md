@@ -1,4 +1,15 @@
-# Atendimentos com IA – Buss & Hackbarth
+# THANOS – Atendimento (módulo vermelho) – Buss & Hackbarth
+
+> **THANOS** é o sistema jurídico do escritório. Cada joia colorida é um módulo (roxa, azul, vermelha, laranja, verde e amarela). Este repositório traz a entrada do THANOS e o **módulo vermelho, Atendimento**; os demais aparecem no painel como "Em breve".
+>
+> | Endereço | O que é |
+> |---|---|
+> | `/` | Tela de entrada do THANOS e, depois de entrar, o painel com as seis joias (`app/static/thanos`) |
+> | `/ficha/` | Módulo vermelho: fichas de atendimento |
+> | `/atendimento` | Módulo vermelho: gravação e transcrição com IA |
+> | `/usuarios` | Usuários e permissões (só administrador) |
+>
+> Para criar um novo módulo, preencha `nome`, `desc` e os links da joia correspondente na lista `MODS` de `app/static/thanos/thanos.js`.
 
 Módulo que grava o atendimento presencial pelo microfone, transcreve a conversa, analisa os documentos anexados (CNIS, laudos, relatórios de tempo, cartas do INSS) e gera uma ficha estruturada, com referência às fontes, para revisão do advogado. O áudio é excluído quando a transcrição foi concluída e a ficha é finalizada.
 
@@ -90,7 +101,7 @@ alembic upgrade head
 python -m app.cli create-user advogado@hackbarth.adv.br "Nome do Advogado" advogado   # pede a senha
 uvicorn app.main:app --port 8000            # com RUN_WORKER_IN_PROCESS=true o worker roda junto
 ```
-Para usar o microfone, acesse por `http://localhost:8000` ou por **HTTPS**. O navegador bloqueia o microfone em `http` comum. Para testar sem chamar a OpenAI, defina `OPENAI_FAKE=true`.
+Para usar o microfone, acesse por `http://localhost:8000/atendimento` ou por **HTTPS**. O navegador bloqueia o microfone em `http` comum. Para testar sem chamar a OpenAI, defina `OPENAI_FAKE=true`.
 
 ### Produção (Docker + PostgreSQL)
 ```bash
