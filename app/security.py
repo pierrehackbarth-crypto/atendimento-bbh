@@ -87,5 +87,13 @@ def load_attendance(db, user: User, att_id: str) -> Attendance:
 
 
 def check_sensitive(user: User, doc: Document):
-    if doc.sensitive and not (user.role == "admin" or user.can_view_sensitive):
+    from .permissions import has
+    if doc.sensitive and not has(user, "docs_sensiveis"):
         raise HTTPException(403, "Sem permissão para documentos médicos/sensíveis")
+
+
+def gravacao_user(user: User = Depends(current_user)) -> User:
+    """Usuário do módulo de gravação/análise: exige a permissão "gravacao"."""
+    from .permissions import require
+    require(user, "gravacao")
+    return user

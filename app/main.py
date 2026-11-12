@@ -13,12 +13,14 @@ from .config import get_settings
 from .db import Base, engine
 from .models import User, Client, ClientAccess, Attendance, AudioSegment, Document, AIRun, Job, AuditEvent, now
 from .security import (get_db, current_user, create_session, check_password, load_client, load_attendance,
-                       check_sensitive, hash_password, COOKIE, _th)
+                       check_sensitive, hash_password, COOKIE, _th, gravacao_user)
+from .permissions import effective as effective_perms, has as has_perm
 from .files import validate, DOC_TYPES, AUDIO_TYPES, TRANSCRIBABLE, safe_name
 from . import storage, pipeline, worker
 from .schemas import FICHA_SCHEMA, validate as validate_schema, segment_transcript
 from .audit import audit
 from .ficha_api import router as ficha_router
+from .admin_api import router as admin_router
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -90,7 +92,8 @@ def logout(request: Request, response: Response, user=Depends(current_user), db=
 @app.get("/api/me")
 def me(request: Request, user=Depends(current_user)):
     s = get_settings()
-    return {"user": {"id": user.id, "name": user.name, "role": user.role, "can_view_sensitive": user.can_view_sensitive},
+    return {"user": {"id": user.id, "name": user.name, "role": user.role,
+                     "can_view_sensitive": has_perm(user, "docs_sensiveis"), "perms": effective_perms(user)},
             "csrf": request.state.csrf,
             "limits": {"max_audio_upload_mb": s.max_audio_upload_mb, "max_recording_minutes": s.max_recording_minutes,
                        "max_attachment_mb": s.max_attachment_mb, "max_attachments": s.max_attachments_per_attendance,
@@ -105,7 +108,7 @@ class ClientIn(BaseModel):
 
 
 @app.get("/api/clients")
-def list_clients(q: str = "", user=Depends(current_user), db=Depends(get_db)):
+def list_clients(q: str = "", user=Depends(gravacao_user), db=Depends(get_db)):
     stmt = select(Client)
     if user.role != "admin":
         stmt = stmt.where((Client.owner_id == user.id) | Client.id.in_(select(ClientAccess.client_id).where(ClientAccess.user_id == user.id)))
@@ -115,7 +118,7 @@ def list_clients(q: str = "", user=Depends(current_user), db=Depends(get_db)):
 
 
 @app.post("/api/clients")
-def create_client(body: ClientIn, user=Depends(current_user), db=Depends(get_db)):
+def create_client(body: ClientIn, user=Depends(gravacao_user), db=Depends(get_db)):
     c = Client(name=body.name.strip()[:200], cpf=(body.cpf or None), owner_id=user.id)
     db.add(c)
     audit(db, "client_created", user_id=user.id)
@@ -124,7 +127,7 @@ def create_client(body: ClientIn, user=Depends(current_user), db=Depends(get_db)
 
 
 @app.post("/api/clients/{cid}/access")
-def grant_access(cid: str, body: dict, user=Depends(current_user), db=Depends(get_db)):
+def grant_access(cid: str, body: dict, user=Depends(gravacao_user), db=Depends(get_db)):
     c = load_client(db, user, cid)
     if not (user.role == "admin" or c.owner_id == user.id):
         raise HTTPException(403, "Somente o responsável pelo cliente pode conceder acesso")
@@ -170,14 +173,14 @@ def att_view(db, att: Attendance, user: User):
 
 
 @app.get("/api/clients/{cid}/attendances")
-def list_attendances(cid: str, user=Depends(current_user), db=Depends(get_db)):
+def list_attendances(cid: str, user=Depends(gravacao_user), db=Depends(get_db)):
     load_client(db, user, cid)
     rows = db.scalars(select(Attendance).where(Attendance.client_id == cid).order_by(Attendance.created_at.desc())).all()
     return [{"id": a.id, "status": a.status, "created_at": a.created_at, "audio_status": a.audio_status} for a in rows]
 
 
 @app.post("/api/clients/{cid}/attendances")
-def create_attendance(cid: str, user=Depends(current_user), db=Depends(get_db), idempotency_key: str | None = Header(None)):
+def create_attendance(cid: str, user=Depends(gravacao_user), db=Depends(get_db), idempotency_key: str | None = Header(None)):
     load_client(db, user, cid)
     if idempotency_key:
         ex = db.scalar(select(Attendance).where(Attendance.created_by == user.id, Attendance.idempotency_key == idempotency_key[:80]))
@@ -197,7 +200,7 @@ def create_attendance(cid: str, user=Depends(current_user), db=Depends(get_db), 
 
 
 @app.get("/api/attendances/{aid}")
-def get_attendance(aid: str, user=Depends(current_user), db=Depends(get_db)):
+def get_attendance(aid: str, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     return att_view(db, a, user)
 
@@ -217,7 +220,7 @@ def _editable(a):
 
 
 @app.patch("/api/attendances/{aid}")
-def patch_attendance(aid: str, body: PatchIn, user=Depends(current_user), db=Depends(get_db)):
+def patch_attendance(aid: str, body: PatchIn, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     if body.version != a.version:
@@ -258,7 +261,7 @@ def patch_attendance(aid: str, body: PatchIn, user=Depends(current_user), db=Dep
 # ---------------- áudio ----------------
 @app.post("/api/attendances/{aid}/audio")
 async def upload_audio(aid: str, seq: int = Form(...), duration_s: float = Form(0), file: UploadFile = File(...),
-                       user=Depends(current_user), db=Depends(get_db)):
+                       user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     if not a.consent_given:
@@ -299,7 +302,7 @@ async def upload_audio(aid: str, seq: int = Form(...), duration_s: float = Form(
 
 # ---------------- documentos ----------------
 @app.post("/api/attendances/{aid}/documents")
-async def upload_documents(aid: str, files: list[UploadFile] = File(...), user=Depends(current_user), db=Depends(get_db)):
+async def upload_documents(aid: str, files: list[UploadFile] = File(...), user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     s = get_settings()
@@ -325,7 +328,7 @@ async def upload_documents(aid: str, files: list[UploadFile] = File(...), user=D
 
 
 @app.delete("/api/attendances/{aid}/documents/{did}")
-def remove_document(aid: str, did: str, user=Depends(current_user), db=Depends(get_db)):
+def remove_document(aid: str, did: str, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     d = db.get(Document, did)
@@ -342,7 +345,7 @@ def remove_document(aid: str, did: str, user=Depends(current_user), db=Depends(g
 
 
 @app.get("/api/attendances/{aid}/documents/{did}/file")
-def download_document(aid: str, did: str, user=Depends(current_user), db=Depends(get_db)):
+def download_document(aid: str, did: str, user=Depends(gravacao_user), db=Depends(get_db)):
     load_attendance(db, user, aid)
     d = db.get(Document, did)
     if not d or d.attendance_id != aid or not d.storage_key:
@@ -357,7 +360,7 @@ def download_document(aid: str, did: str, user=Depends(current_user), db=Depends
 
 # ---------------- processamento ----------------
 @app.post("/api/attendances/{aid}/transcribe")
-def transcribe(aid: str, user=Depends(current_user), db=Depends(get_db)):
+def transcribe(aid: str, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     segs = db.scalars(select(AudioSegment).where(AudioSegment.attendance_id == aid)).all()
@@ -376,7 +379,7 @@ def transcribe(aid: str, user=Depends(current_user), db=Depends(get_db)):
 
 
 @app.post("/api/attendances/{aid}/analyze-documents")
-def analyze_documents(aid: str, user=Depends(current_user), db=Depends(get_db)):
+def analyze_documents(aid: str, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     docs = db.scalars(select(Document).where(Document.attendance_id == aid, Document.status.in_(["uploaded", "failed"]))).all()
@@ -391,7 +394,7 @@ def analyze_documents(aid: str, user=Depends(current_user), db=Depends(get_db)):
 
 
 @app.post("/api/attendances/{aid}/generate")
-def generate(aid: str, user=Depends(current_user), db=Depends(get_db)):
+def generate(aid: str, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     transcript = a.transcript_revised if a.transcript_revised is not None else a.transcript_original
@@ -409,7 +412,7 @@ def generate(aid: str, user=Depends(current_user), db=Depends(get_db)):
 
 
 @app.post("/api/attendances/{aid}/retry")
-def retry(aid: str, user=Depends(current_user), db=Depends(get_db)):
+def retry(aid: str, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     _editable(a)
     for j in db.scalars(select(Job).where(Job.attendance_id == aid, Job.status == "failed")).all():
@@ -427,7 +430,7 @@ class FinalizeIn(BaseModel):
 
 
 @app.post("/api/attendances/{aid}/finalize")
-def finalize(aid: str, body: FinalizeIn, user=Depends(current_user), db=Depends(get_db)):
+def finalize(aid: str, body: FinalizeIn, user=Depends(gravacao_user), db=Depends(get_db)):
     a = load_attendance(db, user, aid)
     if a.status == "finalized":
         return att_view(db, a, user)  # idempotente
@@ -461,7 +464,7 @@ def finalize(aid: str, body: FinalizeIn, user=Depends(current_user), db=Depends(
 
 
 @app.get("/api/attendances/{aid}/audit")
-def audit_trail(aid: str, user=Depends(current_user), db=Depends(get_db)):
+def audit_trail(aid: str, user=Depends(gravacao_user), db=Depends(get_db)):
     load_attendance(db, user, aid)
     ev = db.scalars(select(AuditEvent).where(AuditEvent.attendance_id == aid).order_by(AuditEvent.at)).all()
     return [{"action": e.action, "at": e.at, "meta": e.meta} for e in ev]
@@ -471,6 +474,7 @@ def audit_trail(aid: str, user=Depends(current_user), db=Depends(get_db)):
 STATIC = os.path.join(os.path.dirname(__file__), "static")
 FICHA_DIR = os.path.join(STATIC, "ficha")
 app.include_router(ficha_router)
+app.include_router(admin_router)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -508,6 +512,11 @@ def ficha_page():
 app.mount("/ficha/vendor", StaticFiles(directory=os.path.join(FICHA_DIR, "vendor")), name="ficha_vendor")
 if os.path.isdir(os.path.join(FICHA_DIR, "cep")):
     app.mount("/ficha/cep", StaticFiles(directory=os.path.join(FICHA_DIR, "cep")), name="ficha_cep")
+
+
+@app.get("/usuarios")
+def usuarios_page():
+    return FileResponse(os.path.join(STATIC, "usuarios.html"), headers={"Cache-Control": "no-store"})
 
 
 @app.get("/")

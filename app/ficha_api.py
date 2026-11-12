@@ -2,7 +2,8 @@
 
 A ficha foi escrita para o claude.ai; aqui ela roda com um adaptador (static/ficha-shim.js) que troca
 os recursos da plataforma por estas rotas: documentos (fichas, lixeira, base de clientes), anexos e usuários.
-Todo usuário ativo do escritório lê e grava as fichas; exclusão definitiva da lixeira só pelo administrador.
+O que cada usuário pode fazer segue as permissões definidas pelo administrador (app/permissions.py);
+exclusão definitiva da lixeira só pelo administrador.
 """
 import json, re
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, File
@@ -11,22 +12,20 @@ from .models import StoreDoc, StoreVersion, Asset, User, now
 from .security import get_db, current_user
 from .audit import audit
 from . import storage
+from .permissions import has, require, effective
 
 router = APIRouter(prefix="/api/ficha")
 
-# coleções que a ficha usa; "leitura" = todos leem; base de clientes só é gravada pela importação (admin)
-COLLECTIONS = {"fichas": "rw", "lixeira": "rw", "clientes": "r", "nomes": "r"}
+# coleções que a ficha usa; a base de clientes (clientes, nomes) só é gravada pela importação (admin)
+COLLECTIONS = ("fichas", "lixeira", "clientes", "nomes")
 ID_RX = re.compile(r"^[A-Za-z0-9_\-.~:@+ ]{1,120}$")
 MAX_DOC_BYTES = 2 * 1024 * 1024
 MAX_ASSET_BYTES = 20 * 1024 * 1024
 
 
-def _col(name: str, write=False, user: User | None = None):
-    mode = COLLECTIONS.get(name)
-    if not mode:
+def _col(name: str):
+    if name not in COLLECTIONS:
         raise HTTPException(404, "Coleção desconhecida")
-    if write and mode != "rw" and not (user and user.role == "admin"):
-        raise HTTPException(403, "Somente leitura")
     return name
 
 
@@ -50,28 +49,71 @@ def _version(db, collection):
     return v.version if v else 0
 
 
+# ---------- permissões (ver app/permissions.py) ----------
+READ_PERM = {"fichas": "fichas_ver", "lixeira": "lixeira", "clientes": "base_clientes", "nomes": "base_clientes"}
+
+
+def _is_mine(data, user) -> bool:
+    """Ficha "do usuário": criada por ele ou em que ele é o atendente."""
+    if not isinstance(data, dict):
+        return False
+    d = data.get("d") if isinstance(data.get("d"), dict) else {}
+    return user.id in (data.get("criadoPor"), d.get("atendenteId"))
+
+
+def _visible(collection, data, user) -> bool:
+    if collection in ("fichas", "lixeira") and not has(user, "fichas_todas"):
+        return _is_mine(data, user)
+    return True
+
+
+def _can_write(db, collection, doc_id, user, existing):
+    """Confere a permissão de gravar/excluir; levanta 403 se faltar."""
+    if collection in ("clientes", "nomes"):
+        if user.role != "admin":
+            raise HTTPException(403, "Somente leitura")
+        return
+    if existing is not None and not _visible(collection, existing.data, user):
+        raise HTTPException(403, "Ficha de outro atendente")
+    if collection == "fichas":
+        # restaurar da lixeira também grava em "fichas"
+        if not (has(user, "fichas_editar") or (has(user, "lixeira") and db.get(StoreDoc, ("lixeira", doc_id)))):
+            require(user, "fichas_editar")
+    else:  # lixeira: entra quem pode excluir fichas
+        require(user, "fichas_excluir")
+
+
 @router.get("/db/{collection}")
 def list_docs(collection: str, request: Request, response: Response, user=Depends(current_user), db=Depends(get_db)):
     _col(collection)
+    if not has(user, READ_PERM[collection]):
+        if collection == "lixeira":   # sem acesso à lixeira: ela aparece vazia
+            return {"version": 0, "docs": []}
+        require(user, READ_PERM[collection])
     ver = _version(db, collection)
-    etag = f'"{collection}-{ver}"'
+    etag = f'"{collection}-{ver}-{1 if has(user, "fichas_todas") else 0}"'
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304, headers={"ETag": etag})
     rows = db.scalars(select(StoreDoc).where(StoreDoc.collection == collection)).all()
     response.headers["ETag"] = etag
-    return {"version": ver, "docs": [{"id": r.doc_id, "data": r.data} for r in rows]}
+    return {"version": ver, "docs": [{"id": r.doc_id, "data": r.data} for r in rows if _visible(collection, r.data, user)]}
 
 
 @router.get("/db/{collection}/{doc_id}")
 def get_doc(collection: str, doc_id: str, user=Depends(current_user), db=Depends(get_db)):
-    r = db.get(StoreDoc, (_col(collection), _id(doc_id)))
+    require(user, READ_PERM[_col(collection)])
+    r = db.get(StoreDoc, (collection, _id(doc_id)))
+    if r and not _visible(collection, r.data, user):
+        raise HTTPException(403, "Ficha de outro atendente")
     return {"id": doc_id, "exists": bool(r), "data": r.data if r else None}
 
 
 @router.put("/db/{collection}/{doc_id}")
 async def set_doc(collection: str, doc_id: str, request: Request, user=Depends(current_user), db=Depends(get_db)):
-    _col(collection, write=True, user=user)
+    _col(collection)
     _id(doc_id)
+    r = db.get(StoreDoc, (collection, doc_id))
+    _can_write(db, collection, doc_id, user, r)
     raw = await request.body()
     if len(raw) > MAX_DOC_BYTES:
         raise HTTPException(413, "Ficha grande demais")
@@ -81,7 +123,6 @@ async def set_doc(collection: str, doc_id: str, request: Request, user=Depends(c
         raise HTTPException(400, "JSON inválido")
     if not isinstance(data, dict):
         raise HTTPException(400, "Documento precisa ser um objeto")
-    r = db.get(StoreDoc, (collection, doc_id))
     if r:
         r.data, r.updated_at, r.updated_by = data, now(), user.id
     else:
@@ -94,13 +135,23 @@ async def set_doc(collection: str, doc_id: str, request: Request, user=Depends(c
 
 @router.delete("/db/{collection}/{doc_id}")
 def delete_doc(collection: str, doc_id: str, user=Depends(current_user), db=Depends(get_db)):
-    _col(collection, write=True, user=user)
+    _col(collection)
     _id(doc_id)
-    if collection == "lixeira" and user.role != "admin":
-        # tirar da lixeira só é permitido ao restaurar (a ficha precisa já estar de volta em "fichas")
-        if not db.get(StoreDoc, ("fichas", doc_id)):
-            raise HTTPException(403, "Somente o administrador pode excluir definitivamente")
     r = db.get(StoreDoc, (collection, doc_id))
+    if collection in ("clientes", "nomes"):
+        _can_write(db, collection, doc_id, user, r)
+    elif r is not None and not _visible(collection, r.data, user):
+        raise HTTPException(403, "Ficha de outro atendente")
+    if collection == "fichas":
+        require(user, "fichas_excluir")
+    if collection == "lixeira":
+        if not db.get(StoreDoc, ("fichas", doc_id)):
+            # exclusão definitiva: só o administrador
+            if user.role != "admin":
+                raise HTTPException(403, "Somente o administrador pode excluir definitivamente")
+        else:
+            # tirar da lixeira depois de restaurar
+            require(user, "lixeira")
     if r:
         db.delete(r)
         _bump(db, collection)
@@ -112,7 +163,8 @@ def delete_doc(collection: str, doc_id: str, user=Depends(current_user), db=Depe
 # ---------------- usuários ----------------
 @router.get("/me")
 def me(request: Request, user=Depends(current_user)):
-    return {"id": user.id, "name": user.name, "role": user.role, "isOwner": user.role == "admin", "csrf": request.state.csrf}
+    return {"id": user.id, "name": user.name, "role": user.role, "isOwner": user.role == "admin", "csrf": request.state.csrf,
+            "perms": effective(user)}
 
 
 @router.post("/profiles")
@@ -187,6 +239,7 @@ def ai_limits(user=Depends(current_user)):
 @router.post("/ai")
 async def ai_sample(input: str = Form(...), json_: str = Form("0", alias="json"), images: list[UploadFile] = File(default=[]),
                     user=Depends(current_user), db=Depends(get_db)):
+    require(user, "ia")
     s = get_settings()
     since = datetime.now(timezone.utc) - timedelta(days=1)
     n = db.scalar(select(func.count()).select_from(AuditEvent).where(AuditEvent.action == "ficha_ai_call", AuditEvent.user_id == user.id,

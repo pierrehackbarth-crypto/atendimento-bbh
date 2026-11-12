@@ -35,8 +35,13 @@ async function boot() {
   try { const m = await api("/api/me"); ME = m.user; CSRF = m.csrf; LIM = m.limits; }
   catch (_) { return showLogin(); }
   if (goNext()) return;
-  $("#who").innerHTML = `<a class="btn" href="/ficha/">Fichas de atendimento</a><span>${esc(ME.name)}</span><button class="btn" id="sair">Sair</button>`;
+  const P = ME.perms || {};
+  $("#who").innerHTML = `${P.fichas_ver ? `<a class="btn" href="/ficha/">Fichas de atendimento</a>` : ""}${ME.role === "admin" ? `<a class="btn" href="/usuarios">Usuários</a>` : ""}<span>${esc(ME.name)}</span><button class="btn" id="sair">Sair</button>`;
   $("#sair").onclick = async () => { await api("/api/logout", { method: "POST" }).catch(() => {}); showLogin(); };
+  if (!P.gravacao) {
+    if (P.fichas_ver) { location.href = "/ficha/"; return; }
+    $("#view").innerHTML = `<div class="card"><h2>Sem acesso</h2><p>Seu usuário ainda não tem permissões. Peça ao administrador.</p></div>`; return;
+  }
   window.onhashchange = route; route();
 }
 function route() {

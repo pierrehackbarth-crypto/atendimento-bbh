@@ -30,6 +30,8 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(20), default="advogado")  # admin | advogado | assistente
     can_view_sensitive: Mapped[bool] = mapped_column(Boolean, default=True)  # documentos médicos
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # permissões ajustadas pelo administrador; vazio = padrão do papel (ver app/permissions.py)
+    perms: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 

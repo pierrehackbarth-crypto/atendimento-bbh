@@ -171,3 +171,16 @@ python -m app.cli set-password email@bbh.adv.br
 python -m app.cli deactivate-user email@bbh.adv.br
 python -m app.cli list-users
 ```
+
+## 10. Usuários e permissões
+
+Só o administrador cadastra pessoas e define o que cada uma acessa, na tela **Usuários** (`/usuarios`, link no topo do sistema e na lateral da ficha).
+
+- **Cadastrar:** nome, e-mail (é o login), papel e senha inicial (mínimo de 10 caracteres).
+- **Papel:** `admin` pode tudo; `advogado` e `assistente` têm um padrão que pode ser ajustado pessoa a pessoa.
+- **Permissões:** ver fichas; ver fichas de todos (sem ela, a pessoa vê só as fichas que criou ou em que é a atendente); criar e editar; excluir (mandar para a lixeira); lixeira (ver e restaurar); backup; base de clientes; usar IA; Tramitação; gravação e análise; documentos médicos.
+- **Padrão do assistente:** tudo menos excluir, lixeira, backup e documentos médicos.
+- **Bloquear acesso** ou **definir nova senha** desconecta a pessoa na hora, em todos os aparelhos.
+- Exclusão definitiva da lixeira continua só com o administrador, e o sistema não deixa ficar sem nenhum administrador ativo.
+
+As permissões valem no servidor (não só escondem botões): uma chamada sem permissão recebe 403. As regras estão em `app/permissions.py`.

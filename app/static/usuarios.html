@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuários – Buss &amp; Hackbarth</title>
+<link rel="stylesheet" href="/static/styles.css">
+<style>
+.ulist{display:grid;gap:12px}
+.uhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.uhead h3{margin:0}
+.muted{color:#6b7280;font-size:.9em}
+.perms{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 16px;margin:10px 0}
+.perms label{display:flex;gap:8px;align-items:flex-start;font-weight:normal}
+.perms input{margin-top:3px;width:auto}
+.perms small{display:block;color:#6b7280}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;background:#e5e7eb;font-size:.8em;margin-left:6px}
+.tag.off{background:#fee2e2;color:#991b1b}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.nf{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>Usuários e permissões</b><span>Buss &amp; Hackbarth Advogados</span></div>
+  <div id="who" class="who"><a class="btn" href="/ficha/">Fichas de atendimento</a><a class="btn" href="/">Início</a></div>
+</header>
+<main id="view" class="wrap" aria-live="polite"><p>Carregando…</p></main>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="/static/usuarios.js"></script>
+</body>
+</html>

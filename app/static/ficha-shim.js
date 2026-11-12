@@ -20,7 +20,7 @@
     try { r = await fetch(path, o); } catch (_) { throw err("unavailable", "Servidor fora do ar"); }
     if (r.status === 401) { location.href = "/?next=" + encodeURIComponent(location.pathname); throw err("unauthenticated"); }
     if (r.status === 304) return r;
-    if (r.status === 403) throw err("invalid_argument", "Sem permissão");
+    if (r.status === 403) { let d = "Sem permissão"; try { d = (await r.clone().json()).detail || d; } catch (_) {} throw err("permission_denied", d); }
     if (r.status === 413) throw err("too_large", "Arquivo grande demais");
     if (r.status === 429) throw err("rate_limited", "Limite atingido");
     if (!r.ok) throw err(r.status >= 500 ? "unavailable" : "invalid_argument", "Erro " + r.status);
@@ -111,7 +111,7 @@
     fd.append("input", typeof input === "string" ? input : JSON.stringify(input));
     fd.append("json", json ? "1" : "0");
     (opts.images || []).forEach((b, i) => fd.append("images", b, b.name || `imagem${i + 1}`));
-    const r = await api("/api/ficha/ai", { method: "POST", body: fd, signal: opts.signal }).catch(e => { if (e.code === "invalid_argument") e.code = "not_granted"; throw e; });
+    const r = await api("/api/ficha/ai", { method: "POST", body: fd, signal: opts.signal }).catch(e => { if (e.code === "invalid_argument" || e.code === "permission_denied") e.code = "not_granted"; throw e; });
     const b = await r.json();
     if (opts.onText) try { opts.onText({ text: b.text, delta: b.text }); } catch (_) {}
     return b;
@@ -126,10 +126,38 @@
     async callTool(server, tool, input) {
       if (server !== "Tramitação Inteligente") throw err("server_not_connected", "Indisponível no servidor do escritório");
       const r = await api(`/api/ficha/tramitacao/${enc(tool)}`, { method: "POST", json: input || {} }).catch(e => {
-        if (e.code === "invalid_argument") e.code = "server_not_connected"; throw e; });
+        if (e.code === "invalid_argument" || e.code === "permission_denied") e.code = "server_not_connected"; throw e; });
       return { payload: await r.json() };
     },
   };
+
+  /* ---------- permissões: esconde o que o usuário não pode usar (o servidor também bloqueia) ---------- */
+  meP.then(m => {
+    const P = m.perms || {}, hide = [];
+    if (!P.fichas_editar) hide.push("#novaBtn", "#salvarBtn", "#importBtn");
+    if (!P.fichas_excluir) hide.push("#excluirBtn");
+    if (!P.lixeira) hide.push("#lixeiraBtn");
+    if (!P.backup) hide.push("#backupBtn", "#importBtn");
+    if (!P.tramitacao) hide.push('[data-act="tramBuscar"]', "#tramNote");
+    const css = document.createElement("style");
+    css.textContent = (hide.length ? hide.join(",") + "{display:none!important}" : "") +
+      ".srv-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.srv-links a{font-size:.85em}";
+    const add = () => {
+      document.head.appendChild(css);
+      const tools = document.querySelector(".side-tools");
+      if (tools && !document.querySelector(".srv-links")) {
+        const d = document.createElement("div"); d.className = "srv-links";
+        d.innerHTML = (P.gravacao ? '<a class="btn" href="/">Gravação</a>' : "") +
+          (m.role === "admin" ? '<a class="btn" href="/usuarios">Usuários</a>' : "") +
+          '<a class="btn" href="#" id="srvSair">Sair</a>';
+        tools.appendChild(d);
+        d.querySelector("#srvSair").onclick = async e => { e.preventDefault();
+          await fetch("/api/logout", { method: "POST", credentials: "same-origin", headers: { "X-CSRF-Token": CSRF } }).catch(() => {});
+          location.href = "/?next=/ficha/"; };
+      }
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", add); else add();
+  }).catch(() => {});
 
   const CAPS = { db, user, assets, downloads, sample, mcp };
   window.claude = Object.freeze({ use: async name => { try { await meP; } catch (_) { return null; } return CAPS[name] || null; } });
