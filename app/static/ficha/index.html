@@ -174,6 +174,13 @@ table.rows td input,table.rows td select{padding:5px 7px}
   .side{border-right:0}
   .brand,.side-tools{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 }
+body.np-fichas_editar #novaBtn,body.np-fichas_editar #salvarBtn,body.np-fichas_editar #importBtn,body.np-fichas_excluir #excluirBtn,body.np-lixeira #lixeiraBtn,body.np-backup #backupBtn,body.np-backup #importBtn,body.np-tramitacao [data-act="tramBuscar"],body.np-tramitacao #tramNote{display:none!important}
+#usuariosBtn{display:none}body.dono #usuariosBtn{display:inline-block}
+.usr .perms{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 14px;margin:8px 0;width:100%}
+.usr .perms label{display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer}.usr .perms label input{margin-top:3px}
+.usr .perms small{display:block;color:var(--muted);font-size:11.5px}
+.usr .row{display:block}.usr .uh{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.usr .uh .grow{flex:1;min-width:180px}
+.usr .tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--soft);border:1px solid var(--line);margin-left:6px}.usr .tag.off{background:var(--bad-bg);color:var(--bad);border-color:transparent}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 
@@ -190,7 +197,7 @@ table.rows td input,table.rows td select{padding:5px 7px}
       <select id="filtroArea" aria-label="Filtrar por área"><option value="">Todas as áreas</option></select>
       <select id="filtroAssunto" aria-label="Filtrar por assunto"><option value="">Todos os assuntos</option></select>
       <select id="filtroStatus" aria-label="Filtrar por situação"><option value="">Todas as situações</option></select>
-      <div class="side-more"><button class="btn" id="lixeiraBtn">Lixeira</button><button class="btn" id="backupBtn">Exportar backup</button><button class="btn" id="importBtn">Importar backup</button><input type="file" id="in_backup" accept=".json,application/json" hidden></div>
+      <div class="side-more"><button class="btn" id="lixeiraBtn">Lixeira</button><button class="btn" id="backupBtn">Exportar backup</button><button class="btn" id="importBtn">Importar backup</button><button class="btn" id="usuariosBtn">Usuários</button><input type="file" id="in_backup" accept=".json,application/json" hidden></div>
     </div>
     <div class="list" id="lista"><div class="empty-list">Carregando fichas…</div></div>
   </aside>
@@ -808,6 +815,21 @@ let usr=null,myId=null;const nomesU={};
 async function carregarNomes(ids){ids=[...new Set(ids.filter(x=>x&&!(x in nomesU)))];if(!usr||!ids.length)return false;try{const ps=await usr.profiles(ids);ids.forEach(id=>{nomesU[id]=(ps[id]&&ps[id].name)||""});return true}catch(_){return false}}
 const nomeU=id=>id?(nomesU[id]||(id===myId?"você":"")):"";
 function quemAtendeu(o){const d=o.d||{};return(d.atendente||"").trim()||nomeU(d.atendenteId||o.criadoPor)}
+/* ---------- usuários e permissões: só o dono da página define o que cada pessoa acessa ---------- */
+const PERMS=[["fichas_todas","Ver fichas de todos","Sem isso, vê só as fichas que criou ou em que é o atendente"],["fichas_editar","Criar e editar fichas","Criar fichas novas e alterar as existentes"],["fichas_excluir","Excluir fichas","Mandar fichas para a Lixeira"],["lixeira","Lixeira","Ver a Lixeira e restaurar fichas"],["backup","Backup","Exportar e importar o backup das fichas"],["base_clientes","Base de clientes","Buscar na base de clientes do escritório"],["ia","Usar IA","Ler documentos, resumir e preencher com IA"],["tramitacao","Tramitação Inteligente","Buscar cliente e processos no Tramitação"]];
+const PAPEIS={advogado:{l:"Advogado(a)",p:{fichas_todas:1,fichas_editar:1,fichas_excluir:1,lixeira:1,backup:1,base_clientes:1,ia:1,tramitacao:1}},assistente:{l:"Assistente/estagiário(a)",p:{fichas_todas:1,fichas_editar:1,fichas_excluir:0,lixeira:0,backup:0,base_clientes:1,ia:1,tramitacao:1}}};
+let souDono=false,permDocs={},minhaPerm=null;
+function permEfetiva(id){const r=permDocs[id];const papel=(r&&PAPEIS[r.papel])?r.papel:"advogado";const p=Object.assign({},PAPEIS[papel].p,r&&r.perms||{});return{papel,bloqueado:!!(r&&r.bloqueado),p,ajustada:!!(r&&r.perms)}}
+function pode(k){if(souDono)return true;if(!minhaPerm)return true;if(minhaPerm.bloqueado)return false;return!!minhaPerm.p[k]}
+function bloqueado(){return!souDono&&!!(minhaPerm&&minhaPerm.bloqueado)}
+function aplicarPerms(){minhaPerm=myId?permEfetiva(myId):null;document.body.classList.toggle("dono",souDono);
+ PERMS.forEach(([k])=>document.body.classList.toggle("np-"+k,!pode(k)));
+ if(bloqueado()){fichas=[];A.innerHTML=`<div class="welcome"><h2>Acesso bloqueado</h2><p>O administrador bloqueou o seu acesso às fichas. Fale com ele se precisar entrar.</p></div>`}
+ if(samplerOrig!==undefined){const s2=pode("ia")?samplerOrig:null;if(s2!==sampler){sampler=s2;if(cur&&!bloqueado()){const y=A.scrollTop;renderEditor();A.scrollTop=y}}}
+ fichaVisivelAberta();renderList();if(cur&&!bloqueado())setTop()}
+let samplerOrig;
+function fichaVisivelAberta(){if(bloqueado()||(!pode("fichas_todas")&&cur&&curId&&!minha(cur))){cur=null;curId=null;dirty=false;const b=$(".bar");if(b)b.remove();if(!bloqueado())A.innerHTML=`<div class="welcome"><h2>Nenhuma ficha aberta</h2><p>Escolha uma ficha na lista ou crie uma nova.</p></div>`}}
+function minha(f){return!!myId&&(f.criadoPor===myId||(f.d&&f.d.atendenteId===myId))}
 let db=null, dl=null, fichas=[], cur=null, curId=null, dirty=false, saving=false, saveTimer=null, lastLocalWrite=0, pendingDelete=false, conflito=null, apagando=false;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -835,6 +857,8 @@ function renderList(){
  const q=$("#busca").value.trim().toLowerCase(), qd=q.replace(/\D/g,""), fa=$("#filtroAssunto").value, fs=$("#filtroStatus").value,far=$("#filtroArea").value;
  const rows=fichas.filter(f=>{
   const d=f.d||{};
+  if(bloqueado())return false;
+  if(!pode("fichas_todas")&&!minha(f))return false;
   if(fa&&!(f.assuntos||[]).includes(fa))return false;
   if(fs&&d.status!==fs)return false;
   if(far&&(d.area||"Previdenciário")!==far)return false;
@@ -1083,8 +1107,9 @@ document.addEventListener("click",e=>{
  if(id==="voltarBtn")closeEditor();
  if(id==="lixeiraBtn")abrirLixeira();
  if(id==="backupBtn")exportarBackup();
- if(id==="importBtn"){const f=$("#in_backup");f.value="";f.click()}
- const xb=e.target.closest("[data-x]");if(xb){const x=xb.dataset.x;if(x.startsWith("confl"))conflAcao(x);else if(x==="bkRest")restaurarBackup(xb);else if(x.startsWith("lix"))lixAcao(x,xb.dataset.id,xb)}
+ if(id==="importBtn"){if(!pode("backup"))return;const f=$("#in_backup");f.value="";f.click()}
+ if(id==="usuariosBtn")abrirUsuarios();
+ const xb=e.target.closest("[data-x]");if(xb){const x=xb.dataset.x;if(x.startsWith("confl"))conflAcao(x);else if(x==="bkRest")restaurarBackup(xb);else if(x.startsWith("lix"))lixAcao(x,xb.dataset.id,xb);else if(x.startsWith("usr"))usrAcao(x,xb.dataset.id,xb)}
  if(id==="copiarBtn")copyText();
  if(id==="baixarBtn")download("docx");
  if(id==="pdfBtn")download("pdf");
@@ -1123,6 +1148,7 @@ function closeEditor(){if(dirty&&curId)save();$("#app").classList.remove("editin
 function fichaBody(){return{d:cur.d,assuntos:cur.assuntos,docsOk:cur.docsOk,anexos:cur.anexos||[],nome:cur.d.nome||"",cpf:cur.d.cpf||"",status:cur.d.status||"",createdAt:cur.createdAt||Date.now(),updatedAt:Date.now(),criadoPor:cur.criadoPor||myId||null,atualizadoPor:myId||cur.atualizadoPor||null}}
 async function save(manual,force){
  if(!cur)return;clearTimeout(saveTimer);
+ if(!pode("fichas_editar")||bloqueado()){if(manual)toast("Seu usuário não tem permissão para salvar fichas.");return}
  if(conflito&&!force){if(manual)showConflito();return}
  if(!db){toast("Sem armazenamento disponível – entre na sua conta para salvar.");return}
  if(!cur.d.nome){if(manual)toast("Preencha o nome do cliente antes de salvar.");return}
@@ -1145,7 +1171,7 @@ async function save(manual,force){
  finally{saving=false}
 }
 function askDelete(){const b=$(".bar");const nm=esc(cur.d.nome||"esta ficha");b.querySelector("#excluirBtn").outerHTML=`<span class="confirm">Excluir ${nm}? <button class="btn danger" id="confirmDel">Excluir</button><button class="btn" id="cancelDel">Cancelar</button></span>`}
-async function doDelete(){if(!curId||!db)return;apagando=true;clearTimeout(saveTimer);
+async function doDelete(){if(!curId||!db)return;if(!pode("fichas_excluir")){toast("Seu usuário não tem permissão para excluir fichas.");return}apagando=true;clearTimeout(saveTimer);
  try{const body=fichaBody();body.excluidaEm=Date.now();body.excluidaPor=myId||null;
   await db.collection("lixeira").doc(curId).set(JSON.parse(JSON.stringify(body)));
   await db.collection("fichas").doc(curId).delete();toast("Ficha movida para a Lixeira");cur=null;curId=null;dirty=false;conflito=null;hideConflito();
@@ -1167,7 +1193,7 @@ async function conflAcao(x){
  try{const sn=await db.collection("fichas").doc(curId).get();if(sn.exists){const f=Object.assign({id:sn.id},sn.data());const i=fichas.findIndex(y=>y.id===f.id);if(i>=0)fichas[i]=f;else fichas.push(f)}}catch(_){}
  openFicha(curId);toast("Versão atual carregada")}
 /* ---------- lixeira ---------- */
-async function abrirLixeira(){if(!db){toast("Entre na sua conta claude.ai para ver a Lixeira.");return}if(travaConflito(null))return;
+async function abrirLixeira(){if(!db){toast("Entre na sua conta claude.ai para ver a Lixeira.");return}if(!pode("lixeira")){toast("Seu usuário não tem acesso à Lixeira.");return}if(travaConflito(null))return;
  if(dirty&&curId&&!conflito)await save();
  cur=null;curId=null;dirty=false;conflito=null;hideConflito();const b=$(".bar");if(b)b.remove();$("#app").classList.add("editing");renderList();
  A.innerHTML=`<div class="lix"><p><button class="btn" data-x="lixVoltar">← Fichas</button></p><h2>Lixeira</h2><p class="note">Carregando…</p></div>`;
@@ -1186,14 +1212,54 @@ async function lixAcao(x,id,btn){
  if(x==="lixRest"){btn.disabled=true;try{const sn=await ref.get();if(!sn.exists){toast("Esta ficha já não está na Lixeira");abrirLixeira();return}
   const f=Object.assign({},sn.data());delete f.excluidaEm;delete f.excluidaPor;f.updatedAt=Date.now();f.atualizadoPor=myId||f.atualizadoPor||null;
   await db.collection("fichas").doc(id).set(f);await ref.delete();toast("Ficha restaurada");abrirLixeira()}catch(_){btn.disabled=false;toast("Não foi possível restaurar")}}}
+/* ---------- tela de usuários (só o dono) ---------- */
+let usrLista=[];
+async function abrirUsuarios(){if(!souDono||!db){toast("Só o administrador (dono da página) gerencia usuários.");return}if(travaConflito(null))return;
+ if(dirty&&curId&&!conflito)await save();
+ cur=null;curId=null;dirty=false;conflito=null;hideConflito();const b=$(".bar");if(b)b.remove();$("#app").classList.add("editing");renderList();
+ A.innerHTML=`<div class="lix usr"><p><button class="btn" data-x="lixVoltar">← Fichas</button></p><h2>Usuários e permissões</h2><p class="note">Carregando…</p></div>`;
+ let reg={};try{(await db.collection("usuarios").get()).docs.forEach(s=>{reg[s.id]=s.data()})}catch(_){}
+ const ids=new Set([...Object.keys(reg),...Object.keys(permDocs),...fichas.flatMap(f=>[f.criadoPor,f.atualizadoPor,f.d&&f.d.atendenteId])].filter(x=>x&&x!==myId));
+ await carregarNomes([...ids]);
+ usrLista=[...ids].map(id=>({id,visto:reg[id]&&reg[id].visto||0})).sort((a,b)=>(nomeU(a.id)||"~").localeCompare(nomeU(b.id)||"~","pt-BR"));
+ renderUsuarios()}
+function renderUsuarios(){const box=A.querySelector(".usr");if(!box)return;
+ const card=u=>{const e=permEfetiva(u.id);const nm=nomeU(u.id)||"Pessoa sem nome visível";
+  return`<div class="row" data-u="${esc(u.id)}"><div class="uh"><div class="grow"><b>${esc(nm)}</b>${e.bloqueado?'<span class="tag off">bloqueado</span>':""}${e.ajustada?'<span class="tag">ajustado</span>':""}<div class="m">${u.visto?"último acesso "+esc(new Date(u.visto).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})):"ainda não registrado"}</div></div>
+  <label class="m">Papel <select data-papel>${Object.entries(PAPEIS).map(([k,v])=>`<option value="${k}"${k===e.papel?" selected":""}>${v.l}</option>`).join("")}</select></label></div>
+  <div class="perms">${PERMS.map(([k,l,h])=>`<label><input type="checkbox" data-p="${k}"${e.p[k]?" checked":""}><span>${esc(l)}<small>${esc(h)}</small></span></label>`).join("")}</div>
+  <div class="uh"><button class="btn pri" data-x="usrSalvar" data-id="${esc(u.id)}">Salvar</button>${e.ajustada?`<button class="btn" data-x="usrPadrao" data-id="${esc(u.id)}">Voltar ao padrão do papel</button>`:""}
+  <button class="btn ${e.bloqueado?"":"danger"}" data-x="${e.bloqueado?"usrDesbloq":"usrBloq"}" data-id="${esc(u.id)}">${e.bloqueado?"Desbloquear":"Bloquear acesso"}</button></div></div>`};
+ box.innerHTML=`<p><button class="btn" data-x="lixVoltar">← Fichas</button></p><h2>Usuários e permissões</h2>
+ <p class="note">Só o senhor, como dono da página, vê esta tela. Cada pessoa aparece aqui depois de abrir a ficha pela primeira vez (ou se já criou alguma ficha); para alguém novo entrar, compartilhe a página pelo menu Compartilhar do claude.ai. Quem não tem ajuste segue o padrão de Advogado(a).</p>
+ <div class="row"><b>Adicionar pessoa da organização</b><div class="uh" style="margin-top:6px"><input type="text" id="usrBusca" placeholder="Nome ou e-mail" style="max-width:320px"><button class="btn" data-x="usrBuscar">Buscar</button></div><div id="usrRes"></div></div>
+ ${usrLista.length?usrLista.map(card).join(""):`<p class="empty-list">Ninguém além do senhor abriu a ficha ainda.</p>`}`;
+ box.querySelectorAll("select[data-papel]").forEach(sel=>sel.onchange=()=>{const r=sel.closest("[data-u]");const p=PAPEIS[sel.value].p;r.querySelectorAll("input[data-p]").forEach(i=>i.checked=!!p[i.dataset.p])})}
+async function usrAcao(x,id,btn){
+ if(x==="usrBuscar"){const q=$("#usrBusca").value.trim();const R=$("#usrRes");if(!usr||!usr.search){R.textContent="Busca indisponível.";return}
+  let hits=[];try{hits=await usr.search(q)}catch(_){}hits=(hits||[]).filter(h=>h&&h.id&&h.id!==myId);
+  R.innerHTML=hits.length?hits.slice(0,8).map(h=>`<div class="uh" style="margin-top:6px"><span class="grow"></span><button class="btn" data-x="usrAdd" data-id="${esc(h.id)}">Adicionar</button></div>`).join(""):`<p class="note">Ninguém encontrado.</p>`;
+  R.querySelectorAll(".grow").forEach((g,i)=>{g.textContent=(hits[i].name||"Sem nome")+(hits[i].guest?" (convidado)":"")});return}
+ if(x==="usrAdd"){if(!usrLista.some(u=>u.id===id)){nomesU[id]=undefined;delete nomesU[id];await carregarNomes([id]);usrLista.push({id,visto:0})}renderUsuarios();toast("Ajuste as permissões e clique em Salvar");return}
+ const r=A.querySelector(`[data-u="${CSS.escape(id)}"]`);const ref=db.collection("permissoes").doc(id);const atual=permDocs[id]||{};
+ const base={papel:atual.papel||"advogado",bloqueado:!!atual.bloqueado,atualizadoEm:Date.now(),atualizadoPor:myId||null};
+ let novo=null;
+ if(x==="usrSalvar"&&r){const papel=r.querySelector("select[data-papel]").value;const perms={};r.querySelectorAll("input[data-p]").forEach(i=>perms[i.dataset.p]=i.checked);
+  const pad=PAPEIS[papel].p;const igual=PERMS.every(([k])=>!!pad[k]===perms[k]);novo=Object.assign(base,{papel});if(!igual)novo.perms=perms}
+ if(x==="usrPadrao"){novo=Object.assign(base,{});}
+ if(x==="usrBloq"){if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent="Confirmar bloqueio";return}novo=Object.assign(base,{bloqueado:true});if(atual.perms)novo.perms=atual.perms}
+ if(x==="usrDesbloq"){novo=Object.assign(base,{bloqueado:false});if(atual.perms)novo.perms=atual.perms}
+ if(!novo)return;btn.disabled=true;
+ try{await ref.set(novo);permDocs[id]=novo;toast(x==="usrBloq"?"Acesso bloqueado":x==="usrDesbloq"?"Acesso liberado":"Permissões salvas");renderUsuarios()}
+ catch(_){btn.disabled=false;toast("Não foi possível salvar as permissões")}}
 /* ---------- backup ---------- */
-async function exportarBackup(){if(!db){toast("Entre na sua conta claude.ai para exportar.");return}if(!dl){toast("Download não disponível nesta visualização.");return}
+async function exportarBackup(){if(!db){toast("Entre na sua conta claude.ai para exportar.");return}if(!pode("backup")){toast("Seu usuário não tem permissão de backup.");return}if(!dl){toast("Download não disponível nesta visualização.");return}
  try{toast("Preparando o backup…");const [f,l]=await Promise.all([db.collection("fichas").get(),db.collection("lixeira").get()]);
   const out={tipo:"fichas-atendimento-backup",versao:1,geradoEm:new Date().toISOString(),fichas:f.docs.map(s=>Object.assign({id:s.id},s.data())),lixeira:l.docs.map(s=>Object.assign({id:s.id},s.data()))};
   await dl.save({filename:`fichas-backup-${today()}.json`,data:new Blob([JSON.stringify(out)],{type:"application/json"})});toast(`Backup com ${out.fichas.length} ficha(s) gerado`)}
  catch(e){if(e&&(e.code==="dismissed"||e.code==="not_granted"||e.code==="denied"))return;toast("Não foi possível gerar o backup")}}
 let backupPend=null;
-async function lerBackup(file){if(!db){toast("Entre na sua conta claude.ai para importar.");return}if(travaConflito(null))return;
+async function lerBackup(file){if(!db){toast("Entre na sua conta claude.ai para importar.");return}if(!pode("backup")||!pode("fichas_editar")){toast("Seu usuário não tem permissão de backup.");return}if(travaConflito(null))return;
  let o;try{o=JSON.parse(await file.text())}catch(_){toast("Arquivo de backup inválido");return}
  if(!o||o.tipo!=="fichas-atendimento-backup"||!Array.isArray(o.fichas)){toast("Este arquivo não é um backup das fichas");return}
  const L=o.fichas.filter(f=>f&&typeof f.id==="string"&&/^[A-Za-z0-9_-]{1,80}$/.test(f.id)&&f.d&&typeof f.d==="object");
@@ -1700,10 +1766,10 @@ async function reversoLocal(uf,cidade,rua){if(!cidIdx)cidIdx=await fetch("cep/ci
 
 /* ---------- base de clientes do escritório (coleções clientes/ e nomes/ no banco) ---------- */
 const cliCache={},nomCache={};let cliLast="",nomTimer=null;
-async function cliBucket(id){if(!(id in cliCache))cliCache[id]=db.collection("clientes").doc(id).get().then(s=>s.exists?(s.data().l||[]):null).catch(()=>null);return cliCache[id]}
+async function cliBucket(id){if(!pode("base_clientes"))return null;if(!(id in cliCache))cliCache[id]=db.collection("clientes").doc(id).get().then(s=>s.exists?(s.data().l||[]):null).catch(()=>null);return cliCache[id]}
 async function cliPorCpf(cpf){const d=String(cpf).replace(/\D/g,"");if(d.length!==11||!db)return null;
  for(const id of[d.slice(0,3),d.slice(0,2)]){const L=await cliBucket(id);if(L){return L.find(o=>o.c.replace(/\D/g,"")===d)||null}}return null}
-async function nomesBucket(l){if(!(l in nomCache))nomCache[l]=db.collection("nomes").doc(l).get().then(s=>s.exists?(s.data().l||[]):[]).catch(()=>[]);return nomCache[l]}
+async function nomesBucket(l){if(!pode("base_clientes"))return[];if(!(l in nomCache))nomCache[l]=db.collection("nomes").doc(l).get().then(s=>s.exists?(s.data().l||[]):[]).catch(()=>[]);return nomCache[l]}
 function cliPending(o){const d=cur.d,P={fields:[],rows:[],flags:{},chips:[],info:[],avisos:[],notes:[]};
  const fld=(k,l,nv)=>{if(!nv)return;nv=String(nv);const ov=d[k]||"";if(ov===nv)return;P.fields.push({k,l,nv,ov,mode:"set",on:!ov})};
  fld("nome","Nome",o.n);P.fields.forEach(x=>{if(x.k==="nome"&&normTxt(x.nv).includes(normTxt(x.ov)))x.on=true});fld("cpf","CPF",o.c);fld("nascimento","Nascimento",o.dn);fld("nacionalidade","Nacionalidade",o.na);fld("estadoCivil","Estado civil",FIELD.estadoCivil.o.includes(o.ec)?o.ec:"");fld("profissao","Profissão",o.pr);
@@ -1756,7 +1822,7 @@ function tramPending(c,L){const d=cur.d,P={src:"No Tramitação",fields:[],rows:
  if(c.deathdate)P.avisos.push(`Consta data de óbito no Tramitação: ${fmtD(c.deathdate)}.`);
  const a=c.birthdate&&ageAt(c.birthdate);if(a!=null&&a<18)P.avisos.push(`Cliente menor de idade (${a} anos) – marque "Cliente menor ou curatelado" e informe o representante.`);
  return P}
-async function tramBuscar(){const d=String(cur.d.cpf||"").replace(/\D/g,"");
+async function tramBuscar(){if(!pode("tramitacao")){tramNote("Seu usuário não tem acesso ao Tramitação.","bad");return}const d=String(cur.d.cpf||"").replace(/\D/g,"");
  if(d.length!==11||!cpfOk(d)){tramNote("Digite um CPF válido para buscar no Tramitação.","bad");return}
  if(!mcp){tramNote("A busca no Tramitação só funciona com a ficha aberta na sua conta claude.ai.","bad");return}
  if(tramBusy)return;tramBusy=true;tramNote("Consultando o Tramitação…");
@@ -1912,6 +1978,13 @@ window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.return
  try{usr=await c.use("user");myId=usr?await usr.id():null;if(myId)await carregarNomes([myId])}catch(_){usr=null;myId=null}
  if(cur&&!cur.criadoPor&&!curId){cur.criadoPor=myId;if(!cur.d.atendenteId)cur.d.atendenteId=myId}
  try{mcp=await c.use("mcp")}catch(_){mcp=null}
+ samplerOrig=sampler;
+ try{souDono=usr?await usr.isOwner():false}catch(_){souDono=false}
+ if(db&&myId){
+  db.collection("permissoes").onSnapshot(snap=>{permDocs={};snap.docs.forEach(s=>{permDocs[s.id]=s.data()});aplicarPerms();if(A.querySelector(".usr .row[data-u]"))renderUsuarios()},()=>{});
+  db.collection("usuarios").doc(myId).set({visto:Date.now()}).catch(()=>{});
+ }
+ aplicarPerms();
  if(sampler){try{const L=await sampler.limits();sampleImgs=L&&L.images||null}catch(_){sampleImgs=null}}
  if(cur){setTop();const y=A.scrollTop;renderEditor();A.scrollTop=y}
  if(!db){$("#offline").hidden=false;$("#offline").textContent="As fichas não podem ser carregadas nesta visualização. Entre na sua conta claude.ai para ver e salvar.";renderList();return}

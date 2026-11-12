@@ -140,7 +140,9 @@
     if (!P.backup) hide.push("#backupBtn", "#importBtn");
     if (!P.tramitacao) hide.push('[data-act="tramBuscar"]', "#tramNote");
     const css = document.createElement("style");
-    css.textContent = (hide.length ? hide.join(",") + "{display:none!important}" : "") +
+    // a tela "Usuários" da ficha é a do claude.ai; aqui vale a do servidor (/usuarios)
+    hide.push("#usuariosBtn");
+    css.textContent = hide.join(",") + "{display:none!important}" +
       ".srv-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.srv-links a{font-size:.85em}";
     const add = () => {
       document.head.appendChild(css);
