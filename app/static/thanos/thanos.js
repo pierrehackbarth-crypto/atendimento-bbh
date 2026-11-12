@@ -7,12 +7,16 @@ const ANO = new Date().getFullYear();
 /* Módulos na ordem das joias. Só o vermelho (Atendimento) existe por enquanto. */
 const MODS = [
   { k: "roxa", cor: "Roxa", c: "#a24dff", c2: "#d1a8ff" },
-  { k: "azul", cor: "Azul", c: "#2e8cff", c2: "#94c8ff" },
+  { k: "azul", cor: "Azul", c: "#2e8cff", c2: "#94c8ff", nome: "Petições Iniciais",
+    desc: "Elaboração das petições iniciais a partir da ficha de atendimento e dos documentos do cliente." },
   { k: "vermelha", cor: "Vermelha", c: "#ff2442", c2: "#ff96a4", nome: "Atendimento",
     desc: "Ficha de atendimento do cliente, gravação e transcrição da conversa, leitura de documentos com IA, contrato e procuração." },
-  { k: "laranja", cor: "Laranja", c: "#ff8a1c", c2: "#ffc48d" },
-  { k: "verde", cor: "Verde", c: "#22d36a", c2: "#93efb7" },
-  { k: "amarela", cor: "Amarela", c: "#ffd21a", c2: "#ffe98c" },
+  { k: "laranja", cor: "Laranja", c: "#ff8a1c", c2: "#ffc48d", nome: "Processo Administrativo",
+    desc: "Acompanhamento dos requerimentos e processos administrativos (INSS e outros órgãos)." },
+  { k: "verde", cor: "Verde", c: "#22d36a", c2: "#93efb7", nome: "Financeiro",
+    desc: "Honorários, recebimentos, repasses e despesas do escritório." },
+  { k: "amarela", cor: "Amarela", c: "#ffd21a", c2: "#ffe98c", nome: "Controle de Prazos",
+    desc: "Prazos processuais e administrativos, audiências e perícias, com avisos aos responsáveis." },
 ];
 
 let gid = 0;
@@ -129,7 +133,7 @@ async function boot() {
   document.title = "THANOS – Painel";
   const card = x => {
     if (x.k !== "vermelha") return `<article class="mod off" style="--c:${x.c};--c2:${x.c2}">${gem(x.c)}<div>
-      <span class="tag">Joia ${x.cor}</span><h2>Módulo ${x.cor.toLowerCase()}</h2><p>Reservado para um próximo módulo do THANOS.</p><span class="soon">Em breve</span></div></article>`;
+      <span class="tag">Joia ${x.cor}</span><h2>${x.nome || "Módulo " + x.cor.toLowerCase()}</h2><p>${x.desc || "Reservado para um próximo módulo do THANOS."}</p><span class="soon">Em breve</span></div></article>`;
     const acts = [P.fichas_ver && `<a class="btn" href="/ficha/">Fichas de atendimento</a>`, P.gravacao && `<a class="btn" href="/atendimento">Gravação com IA</a>`].filter(Boolean);
     return `<article class="mod on" style="--c:${x.c};--c2:${x.c2}">${gem(x.c)}<div>
       <span class="tag">Joia ${x.cor}</span><h2>${x.nome}</h2><p>${x.desc}</p>
