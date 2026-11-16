@@ -4,7 +4,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ANO = new Date().getFullYear();
 
-/* Módulos na ordem das joias. Só o vermelho (Atendimento) existe por enquanto. */
+/* Módulos na ordem das joias. Prontos: vermelho (Atendimento) e amarelo (Controle de Prazos). */
 const MODS = [
   { k: "roxa", cor: "Roxa", c: "#a24dff", c2: "#d1a8ff" },
   { k: "azul", cor: "Azul", c: "#2e8cff", c2: "#94c8ff", nome: "Petições Iniciais",
@@ -16,7 +16,7 @@ const MODS = [
   { k: "verde", cor: "Verde", c: "#22d36a", c2: "#93efb7", nome: "Financeiro",
     desc: "Honorários, recebimentos, repasses e despesas do escritório." },
   { k: "amarela", cor: "Amarela", c: "#ffd21a", c2: "#ffe98c", nome: "Controle de Prazos",
-    desc: "Prazos processuais e administrativos, audiências e perícias, com avisos aos responsáveis." },
+    desc: "Prazos do eproc (JFSC, TRF4, TJSC) importados da planilha de intimações, divididos entre as equipes Alfa e Beta, com providência, embargos de declaração e produtividade." },
 ];
 
 let gid = 0;
@@ -133,9 +133,13 @@ async function boot() {
   CSRF = m.csrf; const U = m.user, P = U.perms || {};
   document.title = "THANOS – Painel";
   const card = x => {
-    if (x.k !== "vermelha") return `<article class="mod off" style="--c:${x.c};--c2:${x.c2}">${gem(x.c)}<div>
+    const ATIVOS = {
+      vermelha: [P.fichas_ver && `<a class="btn" href="/ficha/">Fichas de atendimento</a>`, P.gravacao && `<a class="btn" href="/atendimento">Gravação com IA</a>`],
+      amarela: [P.prazos && `<a class="btn" href="/prazos/">Abrir os prazos</a>`],
+    };
+    if (!ATIVOS[x.k]) return `<article class="mod off" style="--c:${x.c};--c2:${x.c2}">${gem(x.c)}<div>
       <span class="tag">Joia ${x.cor}</span><h2>${x.nome || "Módulo " + x.cor.toLowerCase()}</h2><p>${x.desc || "Reservado para um próximo módulo do THANOS."}</p><span class="soon">Em breve</span></div></article>`;
-    const acts = [P.fichas_ver && `<a class="btn" href="/ficha/">Fichas de atendimento</a>`, P.gravacao && `<a class="btn" href="/atendimento">Gravação com IA</a>`].filter(Boolean);
+    const acts = ATIVOS[x.k].filter(Boolean);
     return `<article class="mod on" style="--c:${x.c};--c2:${x.c2}">${gem(x.c)}<div>
       <span class="tag">Joia ${x.cor}</span><h2>${x.nome}</h2><p>${x.desc}</p>
       <div class="acts">${acts.join("") || `<span class="soon">Seu usuário ainda não tem acesso. Peça ao administrador.</span>`}</div></div></article>`;

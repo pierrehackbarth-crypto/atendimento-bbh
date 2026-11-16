@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import select, delete
 from .models import User, SessionToken
 from .security import get_db, current_user, hash_password
-from .permissions import PERMS, ROLES, ROLE_DEFAULTS, effective
+from .permissions import PERMS, ROLES, ROLE_DEFAULTS, GRUPO, effective
 from .audit import audit
 
 router = APIRouter(prefix="/api/admin")
@@ -21,7 +21,8 @@ def admin_user(user: User = Depends(current_user)) -> User:
 
 def _view(u: User):
     return {"id": u.id, "email": u.email, "name": u.name, "role": u.role, "active": u.active,
-            "custom": u.perms is not None, "perms": effective(u), "created_at": u.created_at}
+            "custom": u.perms is not None, "perms": effective(u), "created_at": u.created_at,
+            "prazos_equipe": u.prazos_equipe}
 
 
 def _clean_perms(p):
@@ -49,7 +50,7 @@ def _admins_left(db, except_id):
 
 @router.get("/permissions")
 def catalog(user=Depends(admin_user)):
-    return {"perms": [{"key": k, "label": v[0], "help": v[1]} for k, v in PERMS.items()],
+    return {"perms": [{"key": k, "label": v[0], "help": v[1], "group": GRUPO[k]} for k, v in PERMS.items()],
             "roles": list(ROLES), "defaults": {**ROLE_DEFAULTS, "admin": {k: True for k in PERMS}}}
 
 
@@ -64,6 +65,15 @@ class NewUser(BaseModel):
     role: str = "advogado"
     password: str
     perms: dict | None = None
+    prazos_equipe: int | None = None
+
+
+def _equipe(v):
+    if v in (None, 0, ""):
+        return None
+    if v not in (1, 2):
+        raise HTTPException(400, "Equipe inválida")
+    return v
 
 
 @router.post("/users")
@@ -79,7 +89,7 @@ def create_user(body: NewUser, user=Depends(admin_user), db=Depends(get_db)):
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(409, "Já existe usuário com esse e-mail")
     u = User(email=email, name=body.name.strip()[:200], role=body.role, password_hash=hash_password(body.password),
-             perms=_clean_perms(body.perms))
+             perms=_clean_perms(body.perms), prazos_equipe=_equipe(body.prazos_equipe))
     db.add(u)
     db.flush()
     audit(db, "user_created", user_id=user.id, target=u.id, role=u.role)
@@ -93,6 +103,7 @@ class EditUser(BaseModel):
     active: bool | None = None
     perms: dict | None = None
     reset_perms: bool = False   # volta ao padrão do papel
+    prazos_equipe: int | None = None
 
 
 @router.patch("/users/{uid}")
@@ -115,6 +126,8 @@ def edit_user(uid: str, body: EditUser, user=Depends(admin_user), db=Depends(get
         u.perms = None
     elif body.perms is not None:
         u.perms = _clean_perms(body.perms)
+    if "prazos_equipe" in body.model_fields_set:
+        u.prazos_equipe = _equipe(body.prazos_equipe)
     if body.active is not None and body.active != u.active:
         u.active = body.active
         if not u.active:

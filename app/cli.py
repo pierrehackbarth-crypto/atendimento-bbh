@@ -4,6 +4,7 @@
   python -m app.cli deactivate-user EMAIL               (bloqueia o acesso)
   python -m app.cli list-users
   python -m app.cli import-ficha ARQUIVO                (backup .json da ficha, ou base de clientes .json/.json.gz)
+  python -m app.cli import-prazos ARQUIVO               (prazos.json do sistema de prazos antigo; só com o módulo vazio)
   python -m app.cli create-client NOME CPF EMAIL_RESPONSAVEL  |  sweep"""
 import sys, getpass
 from sqlalchemy import select
@@ -61,6 +62,9 @@ def main(argv):
     elif cmd == "import-ficha":
         from .ficha_import import import_file
         print(import_file(db, argv[1]))
+    elif cmd == "import-prazos":
+        from .prazos_api import importar_arquivo
+        print(importar_arquivo(argv[1]))
     elif cmd == "sweep":
         worker.sweep()
         print("Limpeza de áudios expirados executada")

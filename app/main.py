@@ -22,6 +22,7 @@ from .audit import audit
 from . import protecao
 from .ficha_api import router as ficha_router
 from .admin_api import router as admin_router
+from .prazos_api import router as prazos_router
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -53,7 +54,13 @@ async def security_headers(request: Request, call_next):
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["Permissions-Policy"] = "microphone=(self), camera=()"
-    if request.url.path.startswith("/ficha"):
+    if request.url.path.startswith("/prazos"):
+        # módulo de prazos: script embutido na página, fontes do Google; o leitor de planilhas é servido daqui mesmo
+        resp.headers["Content-Security-Policy"] = (
+            "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; "
+            "frame-ancestors 'none'; form-action 'self'; base-uri 'none'")
+    elif request.url.path.startswith("/ficha"):
         # a ficha usa scripts embutidos, fontes do Google e a consulta pública de CEP
         resp.headers["Content-Security-Policy"] = (
             "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
@@ -104,6 +111,33 @@ def logout(request: Request, response: Response, user=Depends(current_user), db=
             db.delete(st)
             db.commit()
     response.delete_cookie(COOKIE, path="/")
+    return {"ok": True}
+
+
+class MinhaSenhaIn(BaseModel):
+    atual: str
+    nova: str
+
+
+@app.post("/api/minha-senha")
+def minha_senha(body: MinhaSenhaIn, request: Request, user=Depends(current_user), db=Depends(get_db)):
+    """Cada pessoa troca a própria senha (precisa da atual). As outras sessões dela são encerradas."""
+    from .models import SessionToken
+    protecao.verificar(user.email)
+    with protecao.SENHAS_SIMULTANEAS:
+        ok = check_password(body.atual, user.password_hash)
+    if not ok:
+        protecao.registrar_falha(user.email)
+        raise HTTPException(400, "A senha atual não confere")
+    p = protecao.problema_senha(body.nova, user.email)
+    if p:
+        raise HTTPException(400, p)
+    user.password_hash = hash_password(body.nova)
+    atual = _th(request.cookies.get(COOKIE, ""))
+    for st in db.scalars(select(SessionToken).where(SessionToken.user_id == user.id, SessionToken.token_hash != atual)).all():
+        db.delete(st)
+    audit(db, "user_password_changed", user_id=user.id)
+    db.commit()
     return {"ok": True}
 
 
@@ -493,6 +527,7 @@ STATIC = os.path.join(os.path.dirname(__file__), "static")
 FICHA_DIR = os.path.join(STATIC, "ficha")
 app.include_router(ficha_router)
 app.include_router(admin_router)
+app.include_router(prazos_router)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -534,6 +569,28 @@ def ficha_page(request: Request, db=Depends(get_db)):
 app.mount("/ficha/vendor", StaticFiles(directory=os.path.join(FICHA_DIR, "vendor")), name="ficha_vendor")
 if os.path.isdir(os.path.join(FICHA_DIR, "cep")):
     app.mount("/ficha/cep", StaticFiles(directory=os.path.join(FICHA_DIR, "cep")), name="ficha_cep")
+
+
+PRAZOS_DIR = os.path.join(STATIC, "prazos")
+
+
+@app.get("/prazos")
+def prazos_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/prazos/", status_code=307)
+
+
+@app.get("/prazos/")
+def prazos_page(request: Request, db=Depends(get_db)):
+    """Módulo amarelo (Controle de Prazos). Só depois do login no THANOS."""
+    from .security import optional_user
+    from fastapi.responses import RedirectResponse
+    if not optional_user(request, db):
+        return RedirectResponse("/?next=/prazos/", status_code=303)
+    return FileResponse(os.path.join(PRAZOS_DIR, "index.html"), headers={"Cache-Control": "no-store"})
+
+
+app.mount("/prazos/vendor", StaticFiles(directory=os.path.join(PRAZOS_DIR, "vendor")), name="prazos_vendor")
 
 
 @app.get("/usuarios")

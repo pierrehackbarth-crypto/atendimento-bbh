@@ -18,12 +18,28 @@ PERMS = {
     "tramitacao": ("Tramitação Inteligente", "Buscar cliente e processos no Tramitação"),
     "gravacao": ("Gravação e análise", "Usar o módulo de gravação, transcrição e análise de documentos"),
     "docs_sensiveis": ("Documentos médicos", "Abrir documentos médicos e outros sensíveis"),
+    # módulo amarelo – Controle de Prazos
+    "prazos": ("Abrir o Controle de Prazos", "Ver todos os prazos e lançar providência, observações e ED nos da própria equipe (e nos \"A definir\")"),
+    "prazos_importar": ("Importar planilhas do eproc", "Trazer para o sistema as planilhas de intimações do eproc"),
+    "prazos_exportar": ("Exportar Excel", "Baixar os prazos em planilha"),
+    "prazos_equipe": ("Definir a equipe do prazo", "Escolher Alfa ou Beta em cada prazo"),
+    "prazos_editar_outra": ("Editar prazos da outra equipe", "Providência, observações e ED nos prazos da outra equipe"),
+    "prazos_excluir_propria": ("Excluir prazos da própria equipe", "Apagar um prazo da própria equipe"),
+    "prazos_excluir_outra": ("Excluir prazos da outra equipe", "Apagar um prazo da outra equipe"),
+    "prazos_baixa": ("Marcar prazo como cumprido", "Marcar como cumprido ou reabrir um prazo"),
+    "prazos_configurar": ("Configurações dos prazos", "Regras de equipe, feriados, comarcas e links dos tribunais"),
+    "prazos_produtividade": ("Ver a produtividade", "Relatório do que cada pessoa fez nos prazos"),
 }
 
+# em que módulo do THANOS cada permissão aparece na tela de usuários
+GRUPO = {k: ("Controle de Prazos (joia amarela)" if k.startswith("prazos") else "Atendimento (joia vermelha)") for k in PERMS}
+# padrão do sistema de prazos antigo: todos veem e exportam; o resto o administrador libera pessoa por pessoa
+_PRAZOS_PADRAO = {k: k in ("prazos", "prazos_exportar") for k in PERMS if k.startswith("prazos")}
+
 ROLE_DEFAULTS = {
-    "advogado": {k: True for k in PERMS},
+    "advogado": {**{k: True for k in PERMS}, **_PRAZOS_PADRAO},
     "assistente": {**{k: True for k in PERMS}, "fichas_excluir": False, "lixeira": False, "backup": False,
-                   "docs_sensiveis": False},
+                   "docs_sensiveis": False, **_PRAZOS_PADRAO},
 }
 ROLES = ("admin", "advogado", "assistente")
 

@@ -68,6 +68,14 @@ for d in "$PASTA" "$HOME/Downloads" "$HOME/Transferências"; do
     .venv/bin/python -m app.cli import-ficha "$f" && IMPORTOU=1
   done
 done
+# módulo amarelo (Controle de Prazos): traz o prazos.json do sistema de prazos antigo, só se o módulo ainda estiver vazio
+for d in "$PASTA" "$HOME/Downloads" "$HOME/Transferências"; do
+  f="$d/prazos.json"
+  [ -f "$f" ] || continue
+  echo "Importando os prazos de $f..."
+  if .venv/bin/python -m app.cli import-prazos "$f"; then IMPORTOU=1; mv "$f" "$f.importado"; fi
+  break
+done
 [ -n "$IMPORTOU" ] || echo "Nenhum arquivo de dados encontrado (base_clientes_ficha.json.gz, fichas-backup-....json) – pode importar depois rodando este script de novo."
 
 passo "6/7  Iniciar sozinho com o computador"
