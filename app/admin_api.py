@@ -32,9 +32,11 @@ def _clean_perms(p):
     return {k: bool(p[k]) for k in PERMS if k in p}
 
 
-def _check_pw(pw: str):
-    if len(pw or "") < MIN_PW:
-        raise HTTPException(400, f"A senha precisa ter pelo menos {MIN_PW} caracteres")
+def _check_pw(pw: str, email: str = ""):
+    from .protecao import problema_senha
+    p = problema_senha(pw, email)
+    if p:
+        raise HTTPException(400, p)
 
 
 def _drop_sessions(db, uid):
@@ -73,7 +75,7 @@ def create_user(body: NewUser, user=Depends(admin_user), db=Depends(get_db)):
         raise HTTPException(400, "Informe o nome")
     if body.role not in ROLES:
         raise HTTPException(400, "Papel inválido")
-    _check_pw(body.password)
+    _check_pw(body.password, email)
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(409, "Já existe usuário com esse e-mail")
     u = User(email=email, name=body.name.strip()[:200], role=body.role, password_hash=hash_password(body.password),
@@ -131,7 +133,7 @@ def set_password(uid: str, body: NewPassword, user=Depends(admin_user), db=Depen
     u = db.get(User, uid)
     if not u:
         raise HTTPException(404, "Usuário não encontrado")
-    _check_pw(body.password)
+    _check_pw(body.password, u.email)
     u.password_hash = hash_password(body.password)
     if u.id != user.id:
         _drop_sessions(db, u.id)

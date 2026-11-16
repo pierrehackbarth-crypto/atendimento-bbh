@@ -19,6 +19,7 @@ from .files import validate, DOC_TYPES, AUDIO_TYPES, TRANSCRIBABLE, safe_name
 from . import storage, pipeline, worker
 from .schemas import FICHA_SCHEMA, validate as validate_schema, segment_transcript
 from .audit import audit
+from . import protecao
 from .ficha_api import router as ficha_router
 from .admin_api import router as admin_router
 
@@ -36,12 +37,18 @@ async def lifespan(app):
     _stop.set()
 
 
-app = FastAPI(title="THANOS – Atendimento (módulo vermelho) – Buss & Hackbarth", lifespan=lifespan, docs_url=None, redoc_url=None)
+app = FastAPI(title="THANOS – Atendimento (módulo vermelho) – Buss & Hackbarth", lifespan=lifespan, docs_url=None, redoc_url=None,
+              openapi_url=None)
 
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
+    # a cópia crua da ficha (com dados do escritório) só sai por /ficha/, depois do login
+    if request.url.path.startswith("/static/ficha/") or request.url.path == "/static/ficha":
+        return JSONResponse({"detail": "Não encontrado"}, status_code=404)
     resp = await call_next(request)
+    if get_settings().session_cookie_secure:
+        resp.headers["Strict-Transport-Security"] = "max-age=31536000"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "no-referrer"
@@ -62,16 +69,27 @@ async def security_headers(request: Request, call_next):
 
 
 # ---------------- autenticação ----------------
+_SENHA_FALSA = hash_password("senha-que-nao-existe-0")
 class LoginIn(BaseModel):
     email: str
     password: str
 
 
 @app.post("/api/login")
-def login(body: LoginIn, response: Response, db=Depends(get_db)):
-    u = db.scalar(select(User).where(User.email == body.email.lower().strip()))
-    if not u or not u.active or not check_password(body.password, u.password_hash):
+def login(body: LoginIn, request: Request, response: Response, db=Depends(get_db)):
+    email = body.email.lower().strip()[:200]
+    ip = protecao.ip_de(request)
+    protecao.verificar(email)
+    u = db.scalar(select(User).where(User.email == email))
+    with protecao.SENHAS_SIMULTANEAS:
+        ok = check_password(body.password, u.password_hash if u else _SENHA_FALSA)  # mesmo tempo com ou sem usuário
+    if not u or not u.active or not ok:
+        protecao.registrar_falha(email)
+        audit(db, "login_failed", user_id=u.id if u else None, ip=ip)
+        db.commit()
         raise HTTPException(401, "E-mail ou senha inválidos")
+    protecao.registrar_sucesso(email)
+    audit(db, "login_ok", user_id=u.id, ip=ip)
     csrf = create_session(db, u, response)
     return {"csrf": csrf, "user": {"id": u.id, "name": u.name, "role": u.role}}
 
@@ -495,8 +513,12 @@ def ficha_redirect():
 
 
 @app.get("/ficha/")
-def ficha_page():
-    """A ficha de atendimento, com o adaptador que liga os recursos dela a este servidor."""
+def ficha_page(request: Request, db=Depends(get_db)):
+    """A ficha de atendimento, com o adaptador que liga os recursos dela a este servidor. Só depois do login."""
+    from .security import optional_user
+    if not optional_user(request, db):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/?next=/ficha/", status_code=303)
     html = open(os.path.join(FICHA_DIR, "index.html"), encoding="utf-8").read()
     shim = '<script src="/static/ficha-shim.js"></script>'
     i = html.find("<meta charset")

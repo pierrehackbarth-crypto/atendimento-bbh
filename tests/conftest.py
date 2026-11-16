@@ -15,6 +15,8 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setenv("MAX_ATTACHMENT_MB", "1")
     from app.config import get_settings
     get_settings.cache_clear()
+    from app import protecao
+    protecao.zerar()
     from app import db as dbm, storage
     dbm.reset_engine(); storage.reset()
     from app.db import Base, engine, SessionLocal

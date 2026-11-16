@@ -114,7 +114,8 @@ function showLogin(msg, info) {
     $("#enter").disabled = true; $("#enter").textContent = "ENTRANDO…";
     try {
       const r = await fetch("/api/login", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
-      if (!r.ok) return showLogin(r.status === 401 ? "Usuário ou senha inválidos." : "Não foi possível entrar agora. Tente de novo.");
+      if (!r.ok) { let d = ""; try { d = (await r.json()).detail || ""; } catch (_) {}
+        return showLogin(r.status === 401 ? "Usuário ou senha inválidos." : r.status === 429 ? d : "Não foi possível entrar agora. Tente de novo."); }
       const n = nextUrl(); if (n) { location.href = n; return; }
       await boot();
     } catch (_) { showLogin("Sem conexão com o servidor."); }

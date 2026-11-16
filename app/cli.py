@@ -19,8 +19,9 @@ def main(argv):
     if cmd == "create-user":
         email, name, role = argv[1].lower(), argv[2], (argv[3] if len(argv) > 3 else "advogado")
         pw = getpass.getpass("Senha: ") if sys.stdin.isatty() else sys.stdin.readline().strip()
-        if len(pw) < 10:
-            sys.exit("Senha precisa ter ao menos 10 caracteres")
+        from .protecao import problema_senha
+        if problema_senha(pw, email):
+            sys.exit(problema_senha(pw, email))
         if role not in ("admin", "advogado", "assistente"):
             sys.exit("Papel inválido: use admin, advogado ou assistente")
         if db.scalar(select(User).where(User.email == email)):
@@ -40,9 +41,13 @@ def main(argv):
             sys.exit("Usuário não encontrado")
         if cmd == "set-password":
             pw = getpass.getpass("Nova senha: ") if sys.stdin.isatty() else sys.stdin.readline().strip()
-            if len(pw) < 10:
-                sys.exit("Senha precisa ter ao menos 10 caracteres")
+            from .protecao import problema_senha
+            if problema_senha(pw, u.email):
+                sys.exit(problema_senha(pw, u.email))
             u.password_hash = hash_password(pw)
+            from .models import SessionToken
+            for st in db.scalars(select(SessionToken).where(SessionToken.user_id == u.id)).all():
+                db.delete(st)
         else:
             u.active = False
             from .models import SessionToken

@@ -35,7 +35,10 @@ def import_file(db, path):
     if tipo == "fichas-atendimento-backup":
         for col in ("fichas", "lixeira"):
             n = 0
-            for f in o.get(col) or []:
+            itens = o.get(col) or []
+            if isinstance(itens, dict):   # aceita também {id: ficha}
+                itens = [dict(v, id=k) for k, v in itens.items()]
+            for f in itens:
                 f = dict(f)
                 doc_id = str(f.pop("id", "") or "")
                 if doc_id and _put(db, col, doc_id, f, only_if_newer=True):
