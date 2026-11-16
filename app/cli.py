@@ -4,6 +4,7 @@
   python -m app.cli deactivate-user EMAIL               (bloqueia o acesso)
   python -m app.cli list-users
   python -m app.cli import-ficha ARQUIVO                (backup .json da ficha, ou base de clientes .json/.json.gz)
+  python -m app.cli import-prazos ARQUIVO               (prazos.json do sistema de prazos antigo; só com o módulo vazio)
   python -m app.cli create-client NOME CPF EMAIL_RESPONSAVEL  |  sweep"""
 import sys, getpass
 from sqlalchemy import select
@@ -19,8 +20,9 @@ def main(argv):
     if cmd == "create-user":
         email, name, role = argv[1].lower(), argv[2], (argv[3] if len(argv) > 3 else "advogado")
         pw = getpass.getpass("Senha: ") if sys.stdin.isatty() else sys.stdin.readline().strip()
-        if len(pw) < 10:
-            sys.exit("Senha precisa ter ao menos 10 caracteres")
+        from .protecao import problema_senha
+        if problema_senha(pw, email):
+            sys.exit(problema_senha(pw, email))
         if role not in ("admin", "advogado", "assistente"):
             sys.exit("Papel inválido: use admin, advogado ou assistente")
         if db.scalar(select(User).where(User.email == email)):
@@ -40,9 +42,13 @@ def main(argv):
             sys.exit("Usuário não encontrado")
         if cmd == "set-password":
             pw = getpass.getpass("Nova senha: ") if sys.stdin.isatty() else sys.stdin.readline().strip()
-            if len(pw) < 10:
-                sys.exit("Senha precisa ter ao menos 10 caracteres")
+            from .protecao import problema_senha
+            if problema_senha(pw, u.email):
+                sys.exit(problema_senha(pw, u.email))
             u.password_hash = hash_password(pw)
+            from .models import SessionToken
+            for st in db.scalars(select(SessionToken).where(SessionToken.user_id == u.id)).all():
+                db.delete(st)
         else:
             u.active = False
             from .models import SessionToken
@@ -56,6 +62,9 @@ def main(argv):
     elif cmd == "import-ficha":
         from .ficha_import import import_file
         print(import_file(db, argv[1]))
+    elif cmd == "import-prazos":
+        from .prazos_api import importar_arquivo
+        print(importar_arquivo(argv[1]))
     elif cmd == "sweep":
         worker.sweep()
         print("Limpeza de áudios expirados executada")

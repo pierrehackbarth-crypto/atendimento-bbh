@@ -7,6 +7,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path}/t.db")
     monkeypatch.setenv("STORAGE_DIR", str(tmp_path / "st"))
     monkeypatch.setenv("STORAGE_AUDIO_DIR", str(tmp_path / "st"))
+    monkeypatch.setenv("PRAZOS_DIR", str(tmp_path / "prazos"))
     monkeypatch.setenv("STORAGE_ENCRYPTION_KEY", Fernet.generate_key().decode())
     monkeypatch.setenv("OPENAI_FAKE", "true")
     monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
@@ -15,6 +16,8 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setenv("MAX_ATTACHMENT_MB", "1")
     from app.config import get_settings
     get_settings.cache_clear()
+    from app import protecao
+    protecao.zerar()
     from app import db as dbm, storage
     dbm.reset_engine(); storage.reset()
     from app.db import Base, engine, SessionLocal

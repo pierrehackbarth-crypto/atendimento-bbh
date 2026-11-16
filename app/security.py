@@ -97,3 +97,15 @@ def gravacao_user(user: User = Depends(current_user)) -> User:
     from .permissions import require
     require(user, "gravacao")
     return user
+
+
+def optional_user(request: Request, db) -> User | None:
+    """Usuário da sessão, ou None (sem levantar erro). Para páginas que redirecionam ao login."""
+    token = request.cookies.get(COOKIE)
+    if not token:
+        return None
+    st = db.get(SessionToken, _th(token))
+    if not st or st.expires_at.replace(tzinfo=st.expires_at.tzinfo or timezone.utc) < datetime.now(timezone.utc):
+        return None
+    user = db.get(User, st.user_id)
+    return user if user and user.active else None

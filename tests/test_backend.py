@@ -222,3 +222,15 @@ def test_document_not_stuck_when_ai_fails(ca, env, monkeypatch):
     ca.post(f"/api/attendances/{aid}/analyze-documents"); drain()
     v = ca.get(f"/api/attendances/{aid}").json()
     assert v["documents"][0]["status"] == "failed"
+
+
+def test_thanos_entrada_e_modulo_vermelho(env):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    r = c.get("/")
+    assert r.status_code == 200 and "THANOS" in r.text and "/static/thanos/thanos.js" in r.text
+    r = c.get("/atendimento")
+    assert r.status_code == 200 and "/static/app.js" in r.text
+    assert c.get("/static/thanos/thanos.js").status_code == 200
+    assert c.get("/static/thanos/thanos.css").status_code == 200

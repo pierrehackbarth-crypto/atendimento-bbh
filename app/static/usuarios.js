@@ -18,9 +18,13 @@ async function api(path, opt = {}) {
 }
 
 function permBoxes(prefix, perms, disabled) {
-  return `<div class="perms">${CAT.perms.map(p => `<label><input type="checkbox" data-p="${p.key}" id="${prefix}_${p.key}" ${perms[p.key] ? "checked" : ""} ${disabled ? "disabled" : ""}>
-    <span>${esc(p.label)}<small>${esc(p.help)}</small></span></label>`).join("")}</div>`;
+  const grupos = [...new Set(CAT.perms.map(p => p.group || ""))];
+  return grupos.map(g => `${g ? `<h4 class="grp">${esc(g)}</h4>` : ""}<div class="perms">${CAT.perms.filter(p => (p.group || "") === g).map(p => `<label><input type="checkbox" data-p="${p.key}" id="${prefix}_${p.key}" ${perms[p.key] ? "checked" : ""} ${disabled ? "disabled" : ""}>
+    <span>${esc(p.label)}<small>${esc(p.help)}</small></span></label>`).join("")}</div>`).join("");
 }
+const EQUIPES = [["", "Sem equipe"], ["2", "Equipe Alfa"], ["1", "Equipe Beta"]];
+const eqSel = (id, v) => `<select id="${id}">${EQUIPES.map(([k, n]) => `<option value="${k}" ${String(v ?? "") === k ? "selected" : ""}>${n}</option>`).join("")}</select>`;
+const eqVal = id => +$("#" + id).value || null;
 const readPerms = root => Object.fromEntries([...root.querySelectorAll("input[data-p]")].map(i => [i.dataset.p, i.checked]));
 const roleSel = (id, v) => `<select id="${id}">${CAT.roles.map(r => `<option value="${r}" ${r === v ? "selected" : ""}>${PAPEL[r]}</option>`).join("")}</select>`;
 
@@ -32,6 +36,7 @@ function render() {
       <label>E-mail (é o login)<input id="n_email" type="email" required autocomplete="off"></label>
       <label>Papel${roleSel("n_role", "advogado")}</label>
       <label>Senha inicial (mín. 10)<input id="n_pw" type="password" minlength="10" required autocomplete="new-password"></label>
+      <label>Equipe nos prazos${eqSel("n_eq", "")}</label>
     </div>
     <p class="muted">Permissões (já vêm com o padrão do papel; ajuste se quiser):</p>
     <div id="n_perms">${permBoxes("n", CAT.defaults.advogado, false)}</div>
@@ -43,7 +48,7 @@ function render() {
   $("#nf").onsubmit = async e => { e.preventDefault();
     try {
       await api("/api/admin/users", { method: "POST", json: { name: $("#n_name").value, email: $("#n_email").value, role: $("#n_role").value,
-        password: $("#n_pw").value, perms: $("#n_role").value === "admin" ? null : readPerms($("#n_perms")) } });
+        password: $("#n_pw").value, prazos_equipe: eqVal("n_eq"), perms: $("#n_role").value === "admin" ? null : readPerms($("#n_perms")) } });
       toast("Usuário cadastrado"); await load();
     } catch (err) { toast(err.message); } };
   document.querySelectorAll("[data-act]").forEach(b => b.onclick = () => act(b.dataset.act, b.dataset.id));
@@ -58,7 +63,8 @@ function card(u) {
     <div class="uhead"><h3>${esc(u.name)}${self ? '<span class="tag">você</span>' : ""}${u.active ? "" : '<span class="tag off">bloqueado</span>'}</h3>
       <span class="muted">${esc(u.email)}</span></div>
     <div class="nf"><label>Nome<input type="text" id="nm_${u.id}" value="${esc(u.name)}"></label>
-      <label>Papel<select data-role="${u.id}" id="r_${u.id}">${CAT.roles.map(r => `<option value="${r}" ${r === u.role ? "selected" : ""}>${PAPEL[r]}</option>`).join("")}</select></label></div>
+      <label>Papel<select data-role="${u.id}" id="r_${u.id}">${CAT.roles.map(r => `<option value="${r}" ${r === u.role ? "selected" : ""}>${PAPEL[r]}</option>`).join("")}</select></label>
+      <label>Equipe nos prazos${eqSel("eq_" + u.id, u.prazos_equipe)}</label></div>
     <p class="muted">${u.role === "admin" ? "O administrador sempre pode tudo." : u.custom ? "Permissões ajustadas para esta pessoa." : "Usando o padrão do papel."}</p>
     <div class="permbox">${permBoxes("u" + u.id, u.perms, u.role === "admin")}</div>
     <div class="acts">
@@ -74,7 +80,7 @@ async function act(a, id) {
   try {
     if (a === "salvar") {
       const role = $("#r_" + id).value;
-      await api(`/api/admin/users/${id}`, { method: "PATCH", json: { name: $("#nm_" + id).value, role, perms: role === "admin" ? null : readPerms(c), reset_perms: role === "admin" } });
+      await api(`/api/admin/users/${id}`, { method: "PATCH", json: { name: $("#nm_" + id).value, role, prazos_equipe: eqVal("eq_" + id), perms: role === "admin" ? null : readPerms(c), reset_perms: role === "admin" } });
       toast("Salvo. Vale a partir do próximo clique da pessoa.");
     } else if (a === "padrao") {
       await api(`/api/admin/users/${id}`, { method: "PATCH", json: { reset_perms: true } }); toast("Voltou ao padrão do papel");

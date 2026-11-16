@@ -32,6 +32,8 @@ class User(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     # permissões ajustadas pelo administrador; vazio = padrão do papel (ver app/permissions.py)
     perms: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # módulo de prazos: 1 = Equipe Beta, 2 = Equipe Alfa (nomes configuráveis), vazio = sem equipe
+    prazos_equipe: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 

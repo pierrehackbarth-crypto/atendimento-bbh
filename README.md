@@ -1,4 +1,15 @@
-# Atendimentos com IA – Buss & Hackbarth
+# THANOS – Atendimento (módulo vermelho) – Buss & Hackbarth
+
+> **THANOS** é o sistema jurídico do escritório. Cada joia colorida é um módulo (roxa, azul, vermelha, laranja, verde e amarela). Este repositório traz a entrada do THANOS e o **módulo vermelho, Atendimento**; os demais aparecem no painel como "Em breve".
+>
+> | Endereço | O que é |
+> |---|---|
+> | `/` | Tela de entrada do THANOS e, depois de entrar, o painel com as seis joias (`app/static/thanos`) |
+> | `/ficha/` | Módulo vermelho: fichas de atendimento |
+> | `/atendimento` | Módulo vermelho: gravação e transcrição com IA |
+> | `/usuarios` | Usuários e permissões (só administrador) |
+>
+> Para criar um novo módulo, preencha `nome`, `desc` e os links da joia correspondente na lista `MODS` de `app/static/thanos/thanos.js`.
 
 Módulo que grava o atendimento presencial pelo microfone, transcreve a conversa, analisa os documentos anexados (CNIS, laudos, relatórios de tempo, cartas do INSS) e gera uma ficha estruturada, com referência às fontes, para revisão do advogado. O áudio é excluído quando a transcrição foi concluída e a ficha é finalizada.
 
@@ -90,7 +101,7 @@ alembic upgrade head
 python -m app.cli create-user advogado@hackbarth.adv.br "Nome do Advogado" advogado   # pede a senha
 uvicorn app.main:app --port 8000            # com RUN_WORKER_IN_PROCESS=true o worker roda junto
 ```
-Para usar o microfone, acesse por `http://localhost:8000` ou por **HTTPS**. O navegador bloqueia o microfone em `http` comum. Para testar sem chamar a OpenAI, defina `OPENAI_FAKE=true`.
+Para usar o microfone, acesse por `http://localhost:8000/atendimento` ou por **HTTPS**. O navegador bloqueia o microfone em `http` comum. Para testar sem chamar a OpenAI, defina `OPENAI_FAKE=true`.
 
 ### Produção (Docker + PostgreSQL)
 ```bash
@@ -184,3 +195,15 @@ Só o administrador cadastra pessoas e define o que cada uma acessa, na tela **U
 - Exclusão definitiva da lixeira continua só com o administrador, e o sistema não deixa ficar sem nenhum administrador ativo.
 
 As permissões valem no servidor (não só escondem botões): uma chamada sem permissão recebe 403. As regras estão em `app/permissions.py`.
+
+## 11. Controle de Prazos (joia amarela)
+
+O antigo sistema "Prazos Buss & Hackbarth" (servidor Node.js separado, com login próprio) agora é o módulo amarelo do THANOS, em `/prazos/`.
+
+- **Mesmo login e sessão do THANOS** (com proteção CSRF). Não existe mais login ou cadastro de usuários dentro dos prazos.
+- **Permissões e equipe** de cada pessoa ficam na tela **Usuários** do THANOS, no grupo "Controle de Prazos": abrir o módulo, importar planilhas, exportar Excel, definir equipe, editar e excluir prazos da outra equipe, excluir da própria, marcar como cumprido, configurações e produtividade. Padrão para advogado e assistente: abrir e exportar (como no sistema antigo). O administrador pode tudo e é o único que apaga em lote.
+- **Dados** em `data/prazos/` (entra na cópia diária de `data/`): `prazos.json`, `atividade.jsonl` (produtividade) e `backup/` (cópia do dia feita antes da primeira alteração, e cópia extra antes de cada exclusão em lote).
+- **Importar o arquivo do sistema antigo:** `python -m app.cli import-prazos caminho/prazos.json` (só com o módulo vazio). O `instalar_ubuntu.sh` faz isso sozinho se encontrar um `prazos.json` na pasta do sistema, em Downloads ou em Transferências.
+- O leitor de planilhas (xlsx-js-style 1.2.0) é servido pelo próprio servidor, sem CDN.
+- Cada pessoa pode trocar a própria senha (botão "Trocar senha" nos prazos; rota `POST /api/minha-senha`, que exige a senha atual e segue a política de senha do THANOS).
+- Código: `app/prazos_api.py` (servidor) e `app/static/prazos/index.html` (tela). Testes: `tests/test_prazos.py`.
