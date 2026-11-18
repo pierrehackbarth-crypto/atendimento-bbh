@@ -208,10 +208,9 @@ body.np-fichas_editar #novaBtn,body.np-fichas_editar #salvarBtn,body.np-fichas_e
         <h2>Nenhuma ficha aberta</h2>
         <p>Abra uma ficha na lista ou crie uma nova. Cada ficha reúne:</p>
         <ul>
-          <li>cadastro do cliente e relato do atendimento;</li>
+          <li>cadastro do cliente e dados do atendimento;</li>
           <li>os pedidos (aposentadorias, incapacidade, auxílio-acidente, pensão, BPC/LOAS, auxílio-reclusão), cada um com campos próprios;</li>
-          <li>tempo rural, tempo especial, trabalhista, deficiência, carnês e observações;</li>
-          <li>pontos de atenção gerados a partir do que foi preenchido e lista de documentos a solicitar.</li>
+          <li>tempo rural, tempo especial, trabalhista, deficiência, carnês, honorários e observações.</li>
         </ul>
       </div>
     </div>
@@ -261,8 +260,10 @@ const OFFICE={
  curto:"BUSS & HACKBARTH Advogados",
  contratada:"<b><u>CONTRATADA:</u> BUSS &amp; HACKBARTH ADVOGADOS ASSOCIADOS</b>, sociedade civil inscrita na OAB/SC sob nº 2081/2013, inscrita no CNPJ/MF sob nº 18.271.295/0001-04, estabelecida na Rua Sete de Setembro, n. 1600, salas 1205 e 1206, 12º andar, bairro Centro, Blumenau, Santa Catarina, por seus advogados sócios, EM CONJUNTO OU SEPARADAMENTE.",
  outorgadosJud:"<b><u>OUTORGADOS/CONTRATADOS:</u> BUSS &amp; HACKBARTH ADVOGADOS ASSOCIADOS</b>, sociedade civil inscrita na OAB/SC sob nº 2081/2013, inscrita no CNPJ/MF sob nº 18.271.295/0001-04; <b>JORGE BUSS</b>, brasileiro, casado, advogado, inscrito na OAB/SC sob nº 25.183 e CPF nº 036.996.859-00; <b>SALÉSIO BUSS</b>, brasileiro, casado, advogado, inscrito na OAB/SC sob nº 15.033 e CPF nº 533.326.289-68; e <b>PIERRE HACKBARTH</b>, brasileiro, casado, advogado, inscrito na OAB/SC sob nº 24.717 e CPF nº 025.567.549-66, podendo ser notificados/citados na Rua Sete de Setembro, n. 1600, salas 1205 e 1206, 12º andar, bairro Centro, Blumenau, Santa Catarina, EM CONJUNTO OU SEPARADAMENTE.",
- outorgadosInss:"<b>OUTORGADOS:</b> JORGE BUSS, brasileiro, casado, advogado, inscrito na OAB/SC nº 25.183 e no CPF nº 036.996.859-00; SALÉSIO BUSS, brasileiro, casado, advogado, inscrito na OAB/SC nº 15.033 e no CPF nº 533.326.289-68; PIERRE HACKBARTH, brasileiro, casado, advogado, inscrito na OAB/SC nº 24.717 e no CPF nº 025.567.549-66; BRUNA CRISTINA PEGORETTI, brasileira, solteira, advogada, inscrita na OAB/SC nº 56.701 e no CPF nº 077.526.229-31; OTÁVIO JOSÉ BUSS, brasileiro, solteiro, advogado, inscrito na OAB/SC nº 52.884 e CPF nº 097.559.879-16; JHULY EVELYN LIMA MEZZOMO, brasileira, solteira, advogada, inscrita na OAB/SC nº 73.078 e no CPF nº 036.471.512-03; PAULA FERNANDA RUDOLF, brasileira, solteira, auxiliar jurídica, inscrita no CPF nº 095.772.759-31; SUYANNE URBAN, brasileira, solteira, estagiária, inscrita no CPF nº 119.333.749-69; ARIANE CRISTINA MOHR, brasileira, solteira, estagiária, inscrita no CPF nº 125.139.189-32; MIGUEL BUSS, brasileiro, solteiro, estagiário, inscrito no CPF nº 102.990.429-44; YASMIN LARISSA PACHECO, brasileira, solteira, estagiária, inscrita no CPF nº 107.906.719-13; MARIA EDUARDA WEBER RODRIGUES, brasileira, solteira, estagiária, inscrita no CPF nº 118.924.389-09; podendo ser notificados/citados na Rua Sete de Setembro, n. 1600, salas 1205 e 1206, 12º andar, bairro Centro, Blumenau/SC;"
+ outorgadosInss:"<b>OUTORGADOS:</b> JORGE BUSS, brasileiro, casado, advogado, inscrito na OAB/SC nº 25.183 e no CPF nº 036.996.859-00; SALÉSIO BUSS, brasileiro, casado, advogado, inscrito na OAB/SC nº 15.033 e no CPF nº 533.326.289-68; PIERRE HACKBARTH, brasileiro, casado, advogado, inscrito na OAB/SC nº 24.717 e no CPF nº 025.567.549-66; BRUNA CRISTINA PEGORETTI, brasileira, solteira, advogada, inscrita na OAB/SC nº 56.701 e no CPF nº 077.526.229-31; OTÁVIO JOSÉ BUSS, brasileiro, solteiro, advogado, inscrito na OAB/SC nº 52.884 e CPF nº 097.559.879-16; JHULY EVELYN LIMA MEZZOMO, brasileira, solteira, advogada, inscrita na OAB/SC nº 73.078 e no CPF nº 036.471.512-03; PAULA FERNANDA RUDOLF, brasileira, solteira, auxiliar jurídica, inscrita no CPF nº 095.772.759-31; SUYANNE URBAN, brasileira, solteira, estagiária, inscrita no CPF nº 119.333.749-69; ARIANE CRISTINA MOHR, brasileira, solteira, estagiária, inscrita no CPF nº 125.139.189-32; MIGUEL BUSS, brasileiro, solteiro, estagiário, inscrito no CPF nº 102.990.429-44; YASMIN LARISSA PACHECO, brasileira, solteira, estagiária, inscrita no CPF nº 107.906.719-13; MARIA EDUARDA WEBER RODRIGUES, brasileira, solteira, estagiária, inscrita no CPF nº 118.924.389-09; HELENA MARIA GRAF KRIEGER, brasileira, solteira, estagiária, inscrita no CPF nº 103.703.219-52; LANA LUIZA PEYERL, brasileira, solteira, estagiária, inscrita no CPF nº 124.474.159-07; podendo ser notificados/citados na Rua Sete de Setembro, n. 1600, salas 1205 e 1206, 12º andar, bairro Centro, Blumenau/SC;"
 };
+/* procuração da seguradora: mesma equipe da procuração INSS, sem as estagiárias Helena e Lana */
+OFFICE.outorgadosSeg=OFFICE.outorgadosInss.replace(" HELENA MARIA GRAF KRIEGER, brasileira, solteira, estagiária, inscrita no CPF nº 103.703.219-52; LANA LUIZA PEYERL, brasileira, solteira, estagiária, inscrita no CPF nº 124.474.159-07;","");
 
 /* ---------- schema ---------- */
 const SECTIONS=[
@@ -303,7 +304,7 @@ const SECTIONS=[
   {k:"rep_profissao",l:"Profissão do representante",show:["incapaz",INCAPAZ.slice(1)]},
   {calc:"idade"}
  ]},
- {id:"atend",drop:"relatodoc",t:"Atendimento e relato",f:[
+ {id:"atend",t:"Atendimento",f:[
   {k:"dataAtend",l:"Data do atendimento",t:"date"},
   {calc:"atendente"},
   {k:"atendente",l:"Atendido por (se foi outra pessoa)",ph:"Preencha só se não foi quem está registrado"},
@@ -311,24 +312,8 @@ const SECTIONS=[
   {k:"tipoPedido",l:"Tipo de pedido",t:"select",o:["Concessão","Revisão","Restabelecimento","Concessão e revisão","Habilitação no processo"],area:"Previdenciário"},
   {k:"pedidoTexto",l:"Texto do pedido na ficha e no contrato (opcional)",w:"w4",ph:"Em branco = texto gerado pelos assuntos marcados"},
   {calc:"pedido"},
-  {k:"transcricao",l:"Transcrição / anotações do atendimento",t:"textarea",w:"full",ph:"Cole aqui a transcrição do áudio (Word > Ditar > Transcrever, gravador do celular, WhatsApp) ou suas anotações soltas do atendimento."},
-  {calc:"resumo"},
-  {calc:"ler_relatodoc"},
-  {k:"relato",l:"Relato do cliente",t:"textarea",big:1,w:"full",ph:"Resumo do que o cliente contou: histórico de trabalho, problema com o INSS, o que pretende…"},
-  {k:"proximosPassos",l:"Próximos passos / providências",t:"textarea",w:"full"},
-  {k:"retorno",l:"Data de retorno combinada",t:"date"},
-  {k:"honorarios",l:"Honorários / contrato",w:"w4",ph:"Ex.: 30% sobre atrasados, contrato assinado em…"}
  ]},
  {id:"assuntos",t:"Assuntos / pedidos",special:"assuntos"},
- {id:"simul",drop:"simul",area:"Previdenciário",t:"Simulação de tempo de contribuição",f:[
-  {calc:"ler_simul"},
-  {k:"sim_ref",l:"Data de referência (DER / simulação)",t:"date"},{k:"sim_contribuindo",l:"Continua contribuindo?",t:"sn"},{k:"sim_carencia",l:"Carência (meses)",t:"number",mono:1},
-  {k:"sim_ta",l:"Tempo total – anos",t:"number",w:"w1"},{k:"sim_tm",l:"Meses",t:"number",w:"w1"},{k:"sim_td",l:"Dias",t:"number",w:"w1"},
-  {k:"sim_19a",l:"Até 13/11/2019 – anos",t:"number",w:"w1"},{k:"sim_19m",l:"Meses",t:"number",w:"w1"},{k:"sim_19d",l:"Dias",t:"number",w:"w1"},
-  {k:"sim_especial",l:"Tempo especial (se houver)",w:"w3",ph:"Ex.: 12a 4m 0d (25 anos)"},{k:"sim_rural",l:"Tempo rural (se houver)",w:"w3"},
-  {calc:"simul"},
-  {k:"sim_obs",l:"Observações da simulação",t:"textarea",w:"full"}
- ]},
  {id:"inss",area:"Previdenciário",t:"Histórico previdenciário",f:[
   {k:"estadoMun",l:"Laborou para o Estado / Município?",t:"sn",w:"w3"},
   {k:"estadoMunDet",l:"Onde e quando (regime próprio / CTC)",w:"w3",show:["estadoMun","Sim"]},
@@ -492,9 +477,6 @@ const SECTIONS=[
   {k:"ca_guias",l:"Tem os comprovantes / guias?",t:"select",o:["Todos","Parte","Nenhum"],show:["ca_pagou","Sim"]},
   {k:"ca_obs",l:"Anotações",t:"textarea",w:"full",show:["ca_pagou","Sim"]}
  ]},
- {id:"anexos",t:"Anexos",special:"anexos"},
- {id:"alertas",t:"Pontos de atenção",special:"alertas"},
- {id:"docs",t:"Documentos a solicitar",special:"docs"},
  {id:"obs",t:"Observações",f:[
   {k:"observacoes",l:"Observações gerais",t:"textarea",big:1,w:"full"}
  ]},
@@ -678,7 +660,6 @@ const SECTIONS_AREA=[
   {k:"at_processo",area:"!Previdenciário",l:"Nº do processo",mono:1,w:"w3",show:["at_tipo","Defesa em processo"]},
   {k:"at_objeto",area:"!Previdenciário",l:"Objeto da ação no contrato e na procuração",w:"full",ph:"Em branco = gerado pelos pedidos (ex.: AÇÃO TRABALHISTA; AÇÃO DE RESTITUIÇÃO/INDENIZAÇÃO)"},
   {k:"ho_perc",l:"Honorários (% sobre as vantagens) – padrão 30%, altere se combinado outro valor",t:"number",def:"30",w:"w3"},
-  {k:"ho_recurso",l:"Adicional de 5% em caso de recurso / reversão em 2ª instância?",t:"sn",w:"w3"},
   {k:"ho_fixo",area:"!Previdenciário",l:"Valor fixo inicial (R$)",t:"number",mono:1},{k:"ho_fixoData",area:"!Previdenciário",l:"Pago em",t:"date"},
   {k:"ho_fixoRec",area:"!Previdenciário",l:"Valor fixo adicional em caso de recurso (R$)",t:"number",mono:1,w:"w3"},
   {k:"ho_cl15",area:"!Previdenciário",l:"Cláusula 15",t:"select",o:["Não comparecimento em audiência (R$ 1.620,00 – Tabela OAB/SC 2014)","Perito contábil (5% sobre os cálculos)"],w:"full"}]}
@@ -730,7 +711,7 @@ function numExt(n){n=Math.floor(Math.abs(n));if(n===0)return"zero";
 function reais(v){v=Math.round((parseFloat(String(v).replace(",","."))||0)*100);const R=Math.floor(v/100),c=v%100;
  return`R$ ${(v/100).toLocaleString("pt-BR",{minimumFractionDigits:2})} (${R?numExt(R)+(R===1?" real":" reais"):""}${R&&c?" e ":""}${c?numExt(c)+(c===1?" centavo":" centavos"):""})`}
 const perc=p=>`${p}% (${numExt(p)} por cento)`
-const hoP=()=>parseInt(cur.d.ho_perc||"30",10)||30,hoRev=()=>cur.d.ho_recurso==="Sim";;
+const hoP=()=>parseInt(cur.d.ho_perc||"30",10)||30,hoRev=()=>true;
 const OUTRA_EMB=()=>{const d=cur.d,ar=AREA();return{trab:ar==="Trabalhista",def:d.at_tipo==="Defesa em processo",ext:d.at_tipo==="Requerimento extrajudicial"}};
 function objetoOutra(){const d=cur.d,o=OUTRA_EMB();if((d.at_objeto||"").trim())return d.at_objeto.trim().toUpperCase();
  if(o.def)return`AÇÃO DE Nº ${d.at_processo||"[Nº DO PROCESSO]"}`;
@@ -743,7 +724,7 @@ function objetoOutra(){const d=cur.d,o=OUTRA_EMB();if((d.at_objeto||"").trim())r
 function advLinha(){const d=cur.d;return`<p style="margin-top:14pt"><b>Advogado:</b> ${esc(ADVS[d.kit_adv]||ADVS["Jorge Buss"])}</p>`}
 function pageFichaOutra(){const d=cur.d,ar=AREA(),o=OUTRA_EMB();let h=`<h1>FICHA DE ATENDIMENTO</h1>`;
  h+=`<p>${qual({fone:true})};</p>`;
- h+=`<p><b>Relato:</b> ${d.relato?esc(d.relato).replace(/\n/g,"<br>"):""}</p>`;
+ if(d.relato)h+=`<p><b>Relato:</b> ${esc(d.relato).replace(/\n/g,"<br>")}</p>`;
  const parte=ar==="Trabalhista"?[d.r1_nome,d.r2_tem==="Sim"&&d.r2_nome].filter(Boolean).join(" e "):d.pc_nome;
  let req;
  if(o.def)req=`DEFESA REFERENTE AO PROCESSO DE Nº ${esc(d.at_processo||"")||PH("Nº DO PROCESSO")}`;
@@ -765,8 +746,8 @@ function pageContratoOutra(){const d=cur.d,o=OUTRA_EMB();const P=parseInt(d.ho_p
  add(`A contratada obriga-se, face ao mandato judicial que lhe foi outorgado, prestar seus serviços profissionais na defesa dos direitos, na <b>${esc(objetoOutra())}</b>.`);
  const fixo=parseFloat(d.ho_fixo||0)>0?`o valor de ${reais(d.ho_fixo)}${d.ho_fixoData?`, pagos em ${fmtD(d.ho_fixoData)}`:""}, bem como `:"";
  add(`O(a) contratante pagará aos contratados, a título de honorários advocatícios, ${fixo}o percentual de <b>${perc(P)}</b> sobre as vantagens auferidas na demanda, bem como sobre as prestações vencidas e vincendas que serão recebidas pelo(a) contratante ao final do processo${o.trab?", inclusive sobre eventual pensão vitalícia":""}.`);
- if(d.ho_recurso==="Sim")C.push(`2.1. Havendo necessidade de interposição de recurso ou de contrarrazões a recurso interposto pela parte contrária, fica desde já acrescido o percentual acima contratado em 5% (cinco por cento), passando então para o <b>TOTAL DE ${perc(P+5).toUpperCase()}</b>;`);
- if(parseFloat(d.ho_fixoRec||0)>0)C.push(`${d.ho_recurso==="Sim"?"2.2":"2.1"}. Havendo necessidade de INTERPOSIÇÃO DE RECURSO e/ou CONTRARRAZÕES, fica desde já acrescido ao valor contratado na cláusula 2 o montante de ${reais(d.ho_fixoRec)}, pago quando da interposição do recurso ou das contrarrazões;`);
+ C.push(`2.1. Havendo necessidade de interposição de recurso ou de contrarrazões a recurso interposto pela parte contrária, fica desde já acrescido o percentual acima contratado em 5% (cinco por cento), passando então para o <b>TOTAL DE ${perc(P+5).toUpperCase()}</b>;`);
+ if(parseFloat(d.ho_fixoRec||0)>0)C.push(`2.2. Havendo necessidade de INTERPOSIÇÃO DE RECURSO e/ou CONTRARRAZÕES, fica desde já acrescido ao valor contratado na cláusula 2 o montante de ${reais(d.ho_fixoRec)}, pago quando da interposição do recurso ou das contrarrazões;`);
  add(`Em caso de não pagamento da primeira parcela, fica automaticamente rescindido o presente contrato, desobrigando a contratada/causídicos de ajuizar a demanda à qual foi contratada.`);
  add(`Eventual compensação de débito do(a) contratante não prejudicará a cobrança integral dos honorários contratados sobre o total bruto da condenação.`);
  add(`Em havendo acordo nos autos, sem a anuência do advogado, a parte contratante deverá pagar os honorários contratados sobre o valor total da presente demanda, ou seja, sobre 100% (cem por cento) do valor devido;`);
@@ -782,6 +763,7 @@ function pageContratoOutra(){const d=cur.d,o=OUTRA_EMB();const P=parseInt(d.ho_p
  if((d.ho_cl15||(cur.assuntos.includes("c_bancario")?"Perito":"")).startsWith("Perito"))add(`Ainda, no caso da necessidade de apresentação de cálculos de liquidação por parte do(a) contratante, ficarão a cargo deste os honorários do perito contábil, à razão de 5% (cinco por cento) sobre o montante dos cálculos apurados e homologados no processo em questão, que correrão às expensas do(a) contratante.`);
  else add(`As partes ajustam ainda que, no caso de não comparecimento em audiência designada, levando o processo ao seu arquivamento, caberá ao advogado integrante da sociedade contratada a importância de R$ 1.620,00 (mil seiscentos e vinte reais) a título de honorários pela propositura da demanda, sendo R$ 1.200,00 (mil e duzentos reais) pela elaboração da peça inicial e R$ 420,00 (quatrocentos e vinte reais) relativa à audiência de conciliação, conforme Tabela da OAB/SC de 2014.`);
  add(`Em caso de descumprimento de qualquer uma das cláusulas acima mencionadas, tem-se como renunciado o mandato outorgado à contratada/causídicos, ficando ressalvado o direito da cobrança dos honorários ajustados.`);
+add(`<u><b>DOS HONORÁRIOS ADVOCATÍCIOS EM CASO DE FALECIMENTO</b></u>. Em caso de falecimento do(a) CONTRATANTE, havendo ações judiciais ou administrativas em andamento, ou créditos disponíveis ou futuros em seu favor, os honorários advocatícios contratados permanecerão devidos, obrigando-se os herdeiros ao respectivo pagamento, mediante desconto dos valores recebidos em nome do(a) falecido(a), limitado ao montante do crédito existente.`);
  add(`Fica eleito o Foro de Blumenau/SC para dirimir quaisquer dúvidas oriundas deste instrumento, com renúncia expressa de ambas as partes a qualquer outro, por mais privilegiado que seja.`);
  C.push(`E, por estarem assim justos e contratados, assinam o presente em duas vias, de igual teor e para uma só finalidade, sem a presença de testemunhas.`);
  h+=C.map(x=>`<p>${x}</p>`).join("")+`<p>${localData()}</p>`;
@@ -803,10 +785,10 @@ function pageEntrevista(){const d=cur.d;let h=`<h1>ENTREVISTA – AÇÃO TRABALH
  SECTIONS.filter(s=>s.spec&&cur.assuntos.includes(s.spec)&&areaDoAssunto(s.spec)==="Trabalhista").forEach(s=>{const g=genericLines(s);if(g)h+=`<p style="margin-top:10pt"><b><u>${esc(s.t.toUpperCase())}</u></b></p>`+g});
  h+=`<p style="margin-top:14pt">Reconheço corretas as informações presentes neste formulário.</p><p>${localData()}</p>`+sig1();return h}
 function pageProcSeg(){const d=cur.d;const sg=(d.sg_seguradora||"").trim();
- return`<h1>PROCURAÇÃO PARA REPRESENTAR PERANTE A SEGURADORA</h1><p><b>OUTORGANTE:</b> ${qual()}.</p><p>${OFFICE.outorgadosInss}</p><p>Através do presente instrumento particular de mandato, o OUTORGANTE nomeia e constitui como seus procuradores os OUTORGADOS para representá-lo perante a <b>${sg?esc(sg.toUpperCase()):PH("SEGURADORA")}</b>, a fim de que estes possam tratar de todos os interesses que envolvem o primeiro, podendo, para tanto, requerer, assinar e aceitar qualquer documento, inclusive as decisões referentes aos avisos de sinistro, requerer cópia de todas as apólices, prestar esclarecimentos, providenciar a apresentação de provas, enfim, praticar todos os atos necessários ao fiel cumprimento deste mandato.</p><p>${localData(true)}</p><p></p>${sig1()}`}
+ return`<h1>PROCURAÇÃO PARA REPRESENTAR PERANTE A SEGURADORA</h1><p><b>OUTORGANTE:</b> ${qual()}.</p><p>${OFFICE.outorgadosSeg}</p><p>Através do presente instrumento particular de mandato, o OUTORGANTE nomeia e constitui como seus procuradores os OUTORGADOS para representá-lo perante a <b>${sg?esc(sg.toUpperCase()):PH("SEGURADORA")}</b>, a fim de que estes possam tratar de todos os interesses que envolvem o primeiro, podendo, para tanto, requerer, assinar e aceitar qualquer documento, inclusive as decisões referentes aos avisos de sinistro, requerer cópia de todas as apólices, prestar esclarecimentos, providenciar a apresentação de provas, enfim, praticar todos os atos necessários ao fiel cumprimento deste mandato.</p><p>${localData(true)}</p><p></p>${sig1()}`}
 function pageReqSeg(){const d=cur.d;const sg=(d.sg_seguradora||"").trim();const tipo=(d.sg_tipo||"Vida").toLowerCase();
  return`<p>À<br><b>${sg?esc(sg.toUpperCase()):PH("SEGURADORA / INSTITUIÇÃO")}</b></p><p style="text-align:right">Recebido em: ___ / ___ / ______<br>Por: ______________________</p><p style="margin-top:18pt">Eu, ${qual({eu:true,fone:true})}, venho mui respeitosamente à presença de V. Sa. requerer cópia da Apólice de Seguro de ${esc(tipo)}${d.sg_apolice?` nº ${esc(d.sg_apolice)}`:""}.</p><p>Ainda, não possuindo referidos documentos ou negando-se a fornecê-los, favor justificar seus motivos por meio de DECLARAÇÃO, com carimbo e assinatura do responsável.</p><p>Espera deferimento.</p><p>${localData(true)}</p><p class="c" style="text-align:center;margin-top:36pt">___________________________<br><b>REQUERENTE</b><br>${nomeUp()}</p>`}
-SECTIONS.splice(SECTIONS.findIndex(s=>s.id==="anexos"),0,...SECTIONS_AREA);
+SECTIONS.splice(SECTIONS.findIndex(s=>s.id==="obs"),0,...SECTIONS_AREA);
 const FIELD={};SECTIONS.forEach(s=>(s.f||[]).forEach(f=>{if(f.k)FIELD[f.k]=f}));
 
 
@@ -1378,8 +1360,7 @@ function pageFicha(){if(AREA()!=="Previdenciário")return pageFichaOutra();const
  }else h+=B("ESPECIAL:",d.tesp_tem==="Não"?"NÃO.":PH("SIM/NÃO"));
  // pedidos específicos e histórico
  SECTIONS.filter(s=>s.spec&&cur.assuntos.includes(s.spec)).forEach(s=>{const g=genericLines(s);if(g)h+=`<p style="margin-top:10pt"><b><u>${esc(s.t.toUpperCase())}</u></b></p>`+g});
- if(!semTempo()&&d.sim_ref){const S=simEngine();h+=`<p style="margin-top:10pt"><b><u>SIMULAÇÃO DE TEMPO DE CONTRIBUIÇÃO</u></b></p>`+genericLines(SECTIONS.find(s=>s.id==="simul"));if(S.rows)h+=`<p>${S.rows.map(r=>`${esc(r.nome)}: ${r.ok?"<b>JÁ TEM DIREITO</b>":r.quando?"a partir de "+r.quando.toLocaleDateString("pt-BR"):"não alcança"}`).join("<br>")}</p>`}
- const hist=genericLines(SECTIONS.find(s=>s.id==="inss"),["estadoMun","estadoMunDet","acidente","acidenteDet"]);if(hist)h+=`<p style="margin-top:10pt"><b><u>HISTÓRICO PREVIDENCIÁRIO</u></b></p>`+hist;
+  const hist=genericLines(SECTIONS.find(s=>s.id==="inss"),["estadoMun","estadoMunDet","acidente","acidenteDet"]);if(hist)h+=`<p style="margin-top:10pt"><b><u>HISTÓRICO PREVIDENCIÁRIO</u></b></p>`+hist;
  const obs=[d.observacoes,d.proximosPassos].filter(Boolean).join("\n");
  if(obs)h+=`<p style="margin-top:10pt"><b>Obs: ${esc(obs).replace(/\n/g,"<br>")}</b></p>`;
  h+=`<p></p><p class="c" style="text-align:center;margin-top:24pt">${localData()}</p><p class="c" style="text-align:center">________________________________<br><b>De acordo com o acima exposto.</b></p>`;
@@ -1392,10 +1373,10 @@ function pageContrato(){let h=`<h1>CONTRATO DE HONORÁRIOS ADVOCATÍCIOS</h1>`;
  `2.1. Compreendem-se como <b>prestações vencidas</b> todas as parcelas devidas ou recebidas pelo(a) contratante, <u>desde a data da concessão ou revisão do benefício previdenciário até a data do trânsito em julgado da ação judicial.</u>`,
  `2.2. Compreendem-se como <b>prestações vincendas</b> todas as parcelas devidas ou recebidas pelo(a) contratante, <u>desde a data do trânsito em julgado da ação judicial até a data em que a requisição de pequeno valor – RPV ou Precatório – RPP, estiverem disponíveis para saque.</u>`,
  `2.3. Em <b>havendo acordo ou renúncia</b> nos autos, a parte contratante compromete-se em pagar os honorários contratados sobre o valor total da presente demanda, ou seja, sobre 100% (cem por cento) do valor devido;`,
- ...(hoRev()?[`2.4. Em caso de não concessão da aposentadoria/revisão em primeira instância e de <b>reversão da decisão em segunda instância</b>, fica desde já <b><u>acrescido ao percentual acima (cláusula 2) em 5% (cinco por cento), passando então para ${perc(hoP()+5)}</u></b> sobre as vantagens auferidas no requerimento e/ou demanda;`]:[]),
+ `2.4. Em caso de não concessão da aposentadoria/revisão em primeira instância, interposto <b>recurso ou contrarrazões do recurso do INSS,</b> fica desde já <b><u>acrescido ao percentual acima (cláusula 2) em 5% (cinco por cento), passando então para ${perc(hoP()+5)}</u></b> sobre as vantagens auferidas no requerimento e/ou demanda;`,
  `2.5. Se no decorrer da ação judicial a contratante vier a receber benefício inacumulável (exemplo: benefício por incapacidade, seguro desemprego, ou aposentadoria obtida por outro escritório ou por meios próprios) incidirão integralmente os honorários sobre os valores descontados no cálculo de liquidação, conforme ${hoRev()?"cláusulas 2 e 2.4":"cláusula 2"}.`,
  `2.6. Em caso de <b>alteração de espécie de aposentadoria</b>, como de aposentadoria por tempo de contribuição para aposentadoria especial ou aposentadoria da pessoa com deficiência, será devido o valor conforme a cláusula 2 deste contrato.`,
- `2.7. No caso de revisão de aposentadoria que gere aumento do salário de benefício, caberá a título de honorários advocatícios o equivalente a <u>(03) TRÊS AUMENTOS DE RENDA MENSAL</u> de benefício que irá receber no mês de quitação deste contrato, <u>mais ${perc(hoP()).toUpperCase()} das vantagens auferidas${hoRev()?` ou ${perc(hoP()+5)} em caso de reversão em segunda instância`:""}</u>.`,
+ `2.7. No caso de revisão de aposentadoria que gere aumento do salário de benefício, caberá a título de honorários advocatícios o equivalente a <u>(03) TRÊS AUMENTOS DE RENDA MENSAL</u> de benefício que irá receber no mês de quitação deste contrato, <u>mais ${perc(hoP()).toUpperCase()} das vantagens auferidas${hoRev()?` ou ${perc(hoP()+5)} em caso de recurso ou contrarrazões (cláusula 2.4)`:""}</u>.`,
  `2.8. <b><u>Em caso de inadimplemento</u></b> do valor acima estipulado a parte contratante fica ciente desde já que incidirá multa de 5% (cinco por cento) sobre o valor devido, acrescido de juros legais de 1% (um por cento) ao mês.`,
  `2.9. Fica autorizada a contratada a efetuar o desconto de até o limite de 30% (trinta por cento) junto ao INSS, até o pagamento integral do débito.`,
  `3. Na hipótese de honorários de sucumbência, independentemente do percentual, os mesmos serão devidos aos contratados.`,
@@ -1406,13 +1387,14 @@ function pageContrato(){let h=`<h1>CONTRATO DE HONORÁRIOS ADVOCATÍCIOS</h1>`;
  `8. As partes ajustam, desde já, que a interposição de recursos judiciais ou a apresentação de contrarrazões recursais ficará a critério exclusivo dos causídicos/contratados, que terão a incumbência de avaliar sua viabilidade ou não, ficando os mesmos isentos de qualquer responsabilidade.`,
  `9. As partes ajustam que os <b>contratados poderão realizar acordo judicial</b> sem a necessidade de prévia comunicação ao(à) contratante, ficando os mesmos isentos de qualquer responsabilidade.`,
  `10. O(a) contratante se obriga a manter atualizados seus dados cadastrais junto ao escritório dos causídicos/contratados, tais como: residência, telefone, estado civil, comprovante de residência, etc., além de se obrigar a manter-se informado quanto ao andamento processual, a fim de permitir o imediato contato para fins de informações processuais, especialmente em relação às datas de audiências e perícias, ficando os contratados isentos de qualquer responsabilidade.`,
- `11. O foro de competência para qualquer ação oriunda deste contrato é o da cidade de Blumenau/SC.`,
+ `11. <u><b>DOS HONORÁRIOS ADVOCATÍCIOS EM CASO DE FALECIMENTO</b></u>. Em caso de falecimento do(a) CONTRATANTE, havendo ações judiciais ou administrativas em andamento, ou créditos disponíveis ou futuros em seu favor, os honorários advocatícios contratados permanecerão devidos, obrigando-se os herdeiros ao respectivo pagamento, mediante desconto dos valores recebidos em nome do(a) falecido(a), limitado ao montante do crédito existente.`,
+ `12. O foro de competência para qualquer ação oriunda deste contrato é o da cidade de Blumenau/SC.`,
  `E, por estarem assim justos e contratados, assinam o presente em <b>duas vias</b>, de igual teor e para uma só finalidade, <u>sem a presença de testemunhas</u>.`];
  h+=C.map(x=>`<p>${x}</p>`).join("");
  h+=`<p>${localData()}</p>`+sig2();return h}
 function pageProcuracao(){let h=`<h1>PROCURAÇÃO</h1>`;
  h+=`<p><b><u>OUTORGANTE/CONTRATANTE:</u></b> ${qual()}.</p><p>${OFFICE.outorgadosJud}</p>`;
- h+=`<p><b><u>PODERES:</u></b> Pelo presente instrumento particular de mandato, o outorgante nomeia e constitui seus bastante procuradores os outorgados, para com amplos e ilimitados poderes, em conjunto ou separadamente, usar os poderes da cláusula "AD JUDICIA", "AD NEGOCIA" ou "EXTRA JUDICIA" e para o FORO EM GERAL e especialmente para interpor <b><u>AÇÃO PREVIDENCIÁRIA</u></b>, podendo, dito(s), procurador(es) <b><u>variar de ações pelo prazo de doze meses</u></b>, confessar, reconhecer o pedido, transigir, renunciar ao direito sobre o qual se fundarem as ações, bem como renunciar valores para determinação de competência dos Juizados Especiais Federais, estabelecida pela Lei nº 10.259/01 e para fins de emissão de requisição de pequeno valor – RPV aos Tribunais Regionais Federais, receber e dar quitação, inclusive levantar valores depositados em nome do outorgante em processos que tramitam nas Varas Federais e Estaduais, nos Juizados Especiais Federais e na Vara da Fazenda, fazer acordos e firmar compromissos, produzir provas, justificações, requerer medidas preventivas, concordar com cálculos, ratificar desistências, representar o outorgante em qualquer instância ou tribunal, bem como requerer benefício, cópia de processo de concessão, CNIS, extrato de pagamento, histórico de créditos, protocolar pedidos de certidões perante o INSS, bem como todo e qualquer poder necessário para representar o outorgante perante a Autarquia Previdenciária, praticar enfim, todos os atos necessários ao fiel e cabal desempenho do presente mandato, exceto receber citações iniciais, podendo dito(s) procurador(es) substabelecer com ou sem reserva de poderes o que dará o outorgante tudo por bom, firme e válido.</p>`;
+ h+=`<p><b><u>PODERES:</u></b> Pelo presente instrumento particular de mandato, o OUTORGANTE nomeia e constitui seus bastante procuradores os OUTORGADOS, conferindo-lhes amplos poderes para agir em conjunto ou separadamente, com as cláusulas <i>AD JUDICIA</i>, <i>AD NEGOTIA</i> e <i>EXTRA JUDICIA</i>, para o foro em geral e, especialmente, para propor e acompanhar <b><u>AÇÕES PREVIDENCIÁRIAS</u></b>, podendo, para tanto, <b><u>variar de ações pelo prazo de doze meses</u></b>, confessar, reconhecer a procedência do pedido, transigir, renunciar ao direito sobre o qual se fundar a ação, bem como renunciar a valores para fins de fixação da competência dos Juizados Especiais Federais, nos termos da Lei nº 10.259/2001, e para fins de expedição de Requisição de Pequeno Valor (RPV) perante os Tribunais Regionais Federais; receber e dar quitação, inclusive levantar valores depositados em nome do OUTORGANTE em processos que tramitem perante as Varas Federais e Estaduais, os Juizados Especiais Federais e as Varas da Fazenda Pública; celebrar acordos e firmar compromissos; produzir provas e justificações; requerer medidas preventivas; concordar com cálculos; ratificar desistências; e representar o OUTORGANTE em qualquer instância ou tribunal.</p><p>Poderão, ainda, requerer benefícios previdenciários, cópias de processos administrativos de concessão, CNIS, extratos de pagamento, históricos de créditos e certidões perante o INSS, bem como praticar todos os atos necessários à representação do OUTORGANTE perante a Autarquia Previdenciária.</p><p>Ficam igualmente autorizados a requerer, solicitar, retirar e obter documentos junto a empresas, empregadores, hospitais, clínicas, consultórios médicos e demais estabelecimentos de saúde, especialmente Perfil Profissiográfico Previdenciário (PPP), Laudo Técnico das Condições Ambientais do Trabalho (LTCAT), prontuários médicos, históricos de atendimento, exames, laudos, atestados, relatórios médicos e quaisquer outros documentos relacionados à vida laboral e ao histórico de saúde do OUTORGANTE, podendo, para tanto, assinar requerimentos, autorizações e protocolos, bem como praticar todos os atos necessários à obtenção dos referidos documentos.</p><p>Poderão, enfim, praticar todos os atos necessários ao fiel e integral cumprimento do presente mandato, exceto receber citações iniciais, ficando-lhes facultado substabelecer os poderes ora conferidos, no todo ou em parte, com ou sem reserva de iguais poderes, dando o OUTORGANTE por firme e valioso tudo quanto for praticado no exercício deste mandato.</p>`;
  h+=`<h3>CONTRATO DE HONORÁRIOS ADVOCATÍCIOS</h3><p>Conforme reza o <b>CONTRATO DE HONORÁRIOS ADVOCATÍCIOS</b>, "O contratante pagará ao contratado, a título de HONORÁRIOS, uma importância equivalente a (03) TRÊS RENDAS MENSAIS de benefício que irá receber no mês de quitação deste contrato, mais ${perc(hoP()).toUpperCase()} sobre as vantagens auferidas no requerimento e/ou demanda, bem como sobre as prestações vencidas e vincendas que serão auferidas pelo(a) contratante ao final do requerimento e/ou do processo, inclusive sobre eventual complemento positivo";</p>`;
  h+=`<p>${localData()}</p>`+sig2();return h}
 function pageHipo(){return`<h1>DECLARAÇÃO DE HIPOSSUFICIÊNCIA</h1><p></p><p style="text-indent:48pt">Eu <b>${nomeUp()}</b>, ${qual({eu:true})}, <b>DECLARO</b>, para todos os fins de direito e sob as penas da lei, que não tenho condições de arcar com as despesas inerentes ao presente processo, sem prejuízo do meu sustento e de minha família, necessitando, portanto, da GRATUIDADE DA JUSTIÇA, nos termos do art. 98 e seguintes da Lei 13.105/2015 (Código de Processo Civil). Requeiro, ainda, que o benefício abranja todos os atos do processo.</p><p class="c" style="text-align:center;margin-top:24pt">${localData()}</p>${sig1()}`}
@@ -1635,7 +1617,7 @@ function buildPending(tipo,r){if(tipo==="relatodoc"){const P=buildResumo(r);retu
   if(t.anos!=null){fl("atc_tempo","Tempo de contribuição (pedido ATC)",`${t.anos} anos, ${t.meses||0} meses e ${t.dias||0} dias`);fl("atc_tempoData","Contado até",normOcr("ini",r.data_referencia));fl("atc_simulacao","Simulação feita","Sim")}
   const ob=[arr(r.regras_planilha).length?"Conclusões da planilha: "+arr(r.regras_planilha).join("; "):"",arr(r.periodos).length?"Períodos: "+arr(r.periodos).join("; "):""].filter(Boolean).join("\n");
   if(ob&&!(d.sim_obs||"").includes(ob))P.fields.push({k:"sim_obs",l:"Observações da simulação",nv:ob,ov:d.sim_obs||"",mode:"append",on:true});
-  P.info.push("Depois de aplicar, a tabela de regras desta seção mostra os benefícios a que o cliente já tem direito.");return P}
+  P.fields=P.fields.filter(x=>!/^sim_/.test(x.k));return P}
  const fld=(k,l,nv,mode)=>{if(!nv)return;const ov=d[k]||"";if(mode==="append"){if(ov.includes(nv))return;P.fields.push({k,l,nv,ov,mode,on:true});return}if(ov===nv)return;P.fields.push({k,l,nv,ov,mode:"set",on:!ov})};
  if(tipo==="pessoal"){OCR_FIELDS.forEach(([k,l])=>fld(k,l,normOcr(k,r[k])));if(arr(r.documentos).length)P.info.push("Documentos identificados: "+arr(r.documentos).join(", ")+".");if(r.cpf&&!cpfOk(r.cpf))P.avisos.push("O CPF lido não passa na validação do dígito verificador – confira no documento.")}
  if(tipo==="medico"){const docs=arr(r.documentos);
@@ -1963,9 +1945,8 @@ function secDoEvento(e){const s=e.target&&e.target.closest?e.target.closest("sec
 window.addEventListener("dragover",e=>{if(!e.dataTransfer||![...e.dataTransfer.types].includes("Files"))return;e.preventDefault();const s=secDoEvento(e);e.dataTransfer.dropEffect=s?"copy":"none";if(s!==dropSec){if(dropSec)dropSec.classList.remove("dropping");dropSec=s;if(s)s.classList.add("dropping")}});
 window.addEventListener("dragleave",e=>{if(!e.relatedTarget&&dropSec){dropSec.classList.remove("dropping");dropSec=null}});
 window.addEventListener("drop",e=>{if(!e.dataTransfer||!e.dataTransfer.files.length)return;e.preventDefault();const s=secDoEvento(e);if(dropSec){dropSec.classList.remove("dropping");dropSec=null}
- if(!s||!cur){toast("Solte os documentos dentro de uma das seções com leitura (Cadastro, Atendimento, Tempo rural, Tempo especial, Deficiência, Carnê/GPS, Trabalhista).");return}
- const all=[...e.dataTransfer.files],tr=all.filter(ehTranscricao),docs=all.filter(f=>!ehTranscricao(f));
- if(tr.length)importarTranscricao(tr);if(!docs.length)return;
+ if(!s||!cur){toast("Solte os documentos dentro de uma das seções com leitura (Cadastro, Tempo rural, Tempo especial, Deficiência, Carnê/GPS, Trabalhista).");return}
+ const docs=[...e.dataTransfer.files];
  const tipo=s.dataset.drop;if(!$("#rd_"+tipo)){toast("Leitura indisponível nesta seção.");return}
  $("#rd_"+tipo).scrollIntoView({block:"nearest"});readDocs(tipo,docs)});
 /* ---------- boot ---------- */
