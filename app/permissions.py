@@ -29,17 +29,24 @@ PERMS = {
     "prazos_baixa": ("Marcar prazo como cumprido", "Marcar como cumprido ou reabrir um prazo"),
     "prazos_configurar": ("Configurações dos prazos", "Regras de equipe, feriados, comarcas e links dos tribunais"),
     "prazos_produtividade": ("Ver a produtividade", "Relatório do que cada pessoa fez nos prazos"),
+    # módulo verde – Financeiro (RPV Bancos)
+    "financeiro": ("Abrir o RPV Bancos", "Ver os levantamentos de RPV, os pedidos ao BB e à Caixa, a contabilidade e baixar os PDFs"),
+    "financeiro_importar": ("Importar meses", "Importar o pacote do mês gerado pelo GERAR RPV BANCOS (substitui o mês, se já existir)"),
+    "financeiro_editar": ("Conferir e ajustar", "Marcar levantamentos como conferidos e ajustar valores, IR e observações da contabilidade"),
 }
 
 # em que módulo do THANOS cada permissão aparece na tela de usuários
-GRUPO = {k: ("Controle de Prazos (joia amarela)" if k.startswith("prazos") else "Atendimento (joia vermelha)") for k in PERMS}
+GRUPO = {k: ("Controle de Prazos (joia amarela)" if k.startswith("prazos") else
+            "Financeiro (joia verde)" if k.startswith("financeiro") else "Atendimento (joia vermelha)") for k in PERMS}
 # padrão do sistema de prazos antigo: todos veem e exportam; o resto o administrador libera pessoa por pessoa
 _PRAZOS_PADRAO = {k: k in ("prazos", "prazos_exportar") for k in PERMS if k.startswith("prazos")}
+# financeiro: dados de honorários e contas do escritório; fechado por padrão, o administrador libera pessoa por pessoa
+_FIN_PADRAO = {k: False for k in PERMS if k.startswith("financeiro")}
 
 ROLE_DEFAULTS = {
-    "advogado": {**{k: True for k in PERMS}, **_PRAZOS_PADRAO},
+    "advogado": {**{k: True for k in PERMS}, **_PRAZOS_PADRAO, **_FIN_PADRAO},
     "assistente": {**{k: True for k in PERMS}, "fichas_excluir": False, "lixeira": False, "backup": False,
-                   "docs_sensiveis": False, **_PRAZOS_PADRAO},
+                   "docs_sensiveis": False, **_PRAZOS_PADRAO, **_FIN_PADRAO},
 }
 ROLES = ("admin", "advogado", "assistente")
 

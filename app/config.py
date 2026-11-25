@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/atendimento.db"
     storage_dir: str = "./storage"
     prazos_dir: str = "./data/prazos"  # módulo amarelo (Controle de Prazos); dentro de data/, que entra no backup diário
+    financeiro_dir: str = "./data/financeiro"  # módulo verde (Financeiro – RPV Bancos); também dentro de data/
     storage_audio_dir: str = "./storage_audio_tmp"  # áudio temporário: diretório separado, fora das rotinas de backup
     storage_encryption_key: str = ""
     session_cookie_secure: bool = True

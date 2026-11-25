@@ -23,6 +23,7 @@ from . import protecao
 from .ficha_api import router as ficha_router
 from .admin_api import router as admin_router
 from .prazos_api import router as prazos_router
+from .financeiro_api import router as financeiro_router
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -59,6 +60,12 @@ async def security_headers(request: Request, call_next):
         resp.headers["Content-Security-Policy"] = (
             "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self'; "
+            "frame-ancestors 'none'; form-action 'self'; base-uri 'none'")
+    elif request.url.path.startswith("/financeiro"):
+        # módulo financeiro (RPV Bancos): scripts servidos daqui mesmo (sem CDN), fontes do Google, PDFs do próprio servidor
+        resp.headers["Content-Security-Policy"] = (
+            "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' data: https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; "
             "frame-ancestors 'none'; form-action 'self'; base-uri 'none'")
     elif request.url.path.startswith("/ficha"):
         # a ficha usa scripts embutidos, fontes do Google e a consulta pública de CEP
@@ -528,6 +535,7 @@ FICHA_DIR = os.path.join(STATIC, "ficha")
 app.include_router(ficha_router)
 app.include_router(admin_router)
 app.include_router(prazos_router)
+app.include_router(financeiro_router)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -591,6 +599,37 @@ def prazos_page(request: Request, db=Depends(get_db)):
 
 
 app.mount("/prazos/vendor", StaticFiles(directory=os.path.join(PRAZOS_DIR, "vendor")), name="prazos_vendor")
+
+
+FIN_DIR = os.path.join(STATIC, "financeiro")
+
+
+@app.get("/financeiro")
+def financeiro_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/financeiro/", status_code=307)
+
+
+@app.get("/financeiro/")
+def financeiro_page(request: Request, db=Depends(get_db)):
+    """Módulo verde (Financeiro) – RPV Bancos. Só depois do login no THANOS e com a permissão do módulo."""
+    from .security import optional_user
+    from .permissions import has
+    from fastapi.responses import RedirectResponse, HTMLResponse
+    u = optional_user(request, db)
+    if not u:
+        return RedirectResponse("/?next=/financeiro/", status_code=303)
+    if not has(u, "financeiro"):
+        return HTMLResponse(
+            '<!doctype html><meta charset="utf-8"><title>THANOS – Financeiro</title>'
+            '<body style="font-family:system-ui,sans-serif;max-width:560px;margin:60px auto;padding:0 16px;line-height:1.5">'
+            '<h1 style="font-size:20px">Financeiro</h1><p>Seu usuário ainda não tem acesso ao Financeiro. '
+            'Peça ao administrador para liberar em Usuários, no THANOS.</p><p><a href="/">Voltar ao THANOS</a></p>',
+            status_code=403, headers={"Cache-Control": "no-store"})
+    return FileResponse(os.path.join(FIN_DIR, "index.html"), headers={"Cache-Control": "no-store"})
+
+
+app.mount("/financeiro/web", StaticFiles(directory=os.path.join(FIN_DIR, "web")), name="financeiro_web")
 
 
 @app.get("/usuarios")
