@@ -764,7 +764,7 @@ table.grid .z{color:var(--faint)}
           if (c === "processo") map.proc = i;
           else if (c.startsWith("orgao") || c.startsWith("juizo")) map.orgao = i;
           else if (c === "partes") map.partes = i;
-          else if (c.startsWith("cliente")) map.cliente = i;
+          else if (c.startsWith("cliente") || c === "parte") map.cliente = i;
           else if (c.startsWith("parte contraria")) map.contra = i;
           else if (c.startsWith("classe") || c.startsWith("tipo de acao")) map.classe = i;
           else if (c.startsWith("assunto")) map.assunto = i;
@@ -774,7 +774,8 @@ table.grid .z{color:var(--faint)}
           else if (c.startsWith("inicio")) map.inicio = i;
           else if (c.startsWith("final prazo") || c === "prazo final") map.final = i;
           /* planilha analisada (teor lido): providência, resultado, observações e situação */
-          else if (c.startsWith("o que precisa")) map.prov = i;
+          else if (c.startsWith("o que precisa") || c.startsWith("providencia")) map.prov = i;
+          else if (c.startsWith("base")) map.base = i;  /* "Base (último ato lido)": vira o texto da intimação quando não há coluna Evento */
           else if (c.startsWith("sentenca") || c.startsWith("resultado")) map.result = i;
           else if (c.startsWith("observac")) map.obs = i;
           else if (c === "status" || c === "situacao") map.status = i;
@@ -800,7 +801,8 @@ table.grid .z{color:var(--faint)}
         partes = { cliente: cli, contra: ctr };
       }
       const prazoTxt = String(g(row, "prazo") || "").trim();
-      const ev = parseEvento(String(g(row, "evento") || "") + (prazoTxt && !/\d+\s*dias?\s*$/i.test(String(g(row, "evento") || "")) ? " " + prazoTxt : ""));
+      const evTxt = String(g(row, "evento") || "").trim() || String(g(row, "base") || "").trim();
+      const ev = parseEvento(evTxt + (prazoTxt && !/\d+\s*dias?\s*$/i.test(evTxt) ? " " + prazoTxt : ""));
       const classe = String(g(row, "classe") || "").trim();
       let id = idDe(proc, final);
       if (vistos[id]) { vistos[id]++; id += "-" + vistos[id]; } else vistos[id] = 1;
