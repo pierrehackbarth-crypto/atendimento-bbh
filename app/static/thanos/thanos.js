@@ -14,7 +14,7 @@ const MODS = [
   { k: "laranja", cor: "Laranja", c: "#ff8a1c", c2: "#ffc48d", nome: "Processo Administrativo",
     desc: "Acompanhamento dos requerimentos e processos administrativos (INSS e outros órgãos)." },
   { k: "verde", cor: "Verde", c: "#22d36a", c2: "#93efb7", nome: "Financeiro",
-    desc: "Honorários, recebimentos, repasses e despesas do escritório." },
+    desc: "RPV Bancos: pedidos de levantamento das RPVs no Banco do Brasil e na Caixa e a prévia mensal da Contabilidade. Depois: honorários, repasses e despesas." },
   { k: "amarela", cor: "Amarela", c: "#ffd21a", c2: "#ffe98c", nome: "Controle de Prazos",
     desc: "Prazos do eproc (JFSC, TRF4, TJSC) importados da planilha de intimações, divididos entre as equipes Alfa e Beta, com providência, embargos de declaração e produtividade." },
 ];
@@ -136,6 +136,7 @@ async function boot() {
     const ATIVOS = {
       vermelha: [P.fichas_ver && `<a class="btn" href="/ficha/">Fichas de atendimento</a>`, P.gravacao && `<a class="btn" href="/atendimento">Gravação com IA</a>`],
       amarela: [P.prazos && `<a class="btn" href="/prazos/">Abrir os prazos</a>`],
+      verde: [P.financeiro && `<a class="btn" href="/financeiro/">RPV Bancos</a>`],
     };
     if (!ATIVOS[x.k]) return `<article class="mod off" style="--c:${x.c};--c2:${x.c2}">${gem(x.c)}<div>
       <span class="tag">Joia ${x.cor}</span><h2>${x.nome || "Módulo " + x.cor.toLowerCase()}</h2><p>${x.desc || "Reservado para um próximo módulo do THANOS."}</p><span class="soon">Em breve</span></div></article>`;

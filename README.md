@@ -207,3 +207,13 @@ O antigo sistema "Prazos Buss & Hackbarth" (servidor Node.js separado, com login
 - O leitor de planilhas (xlsx-js-style 1.2.0) é servido pelo próprio servidor, sem CDN.
 - Cada pessoa pode trocar a própria senha (botão "Trocar senha" nos prazos; rota `POST /api/minha-senha`, que exige a senha atual e segue a política de senha do THANOS).
 - Código: `app/prazos_api.py` (servidor) e `app/static/prazos/index.html` (tela). Testes: `tests/test_prazos.py`.
+
+## 12. Financeiro (joia verde) – RPV Bancos
+
+A página "RPV BANCOS" (pasta `E:\BRUNA\RPV_BANCOS`) agora é a primeira ferramenta do módulo verde, em `/financeiro/`: levantamentos de RPV do mês, pedidos ao Banco do Brasil (formulário de resgate) e à Caixa (carta de autorização), prévia da planilha da Contabilidade e pendências.
+
+- **Como o mês chega ao THANOS:** o motor em Python continua no computador onde ficam as pastas `RPV's\<mês.ano>` (ele precisa do histórico de pastas para achar a filial). `GERAR RPV BANCOS` e `GERAR CONTABILIDADE` deixam na pasta do mês o `RPV BANCOS - MM.AAAA.zip`. Na página, "Selecionar pasta" + "Importar" grava o mês no servidor. Importar de novo o mesmo mês substitui o que estava salvo (o anterior vai para `backup/`).
+- **Mesmo login do THANOS**, com CSRF. Permissões no grupo "Financeiro" da tela Usuários: abrir o RPV Bancos (ver e baixar os PDFs), importar meses, conferir e ajustar. **Fechado por padrão** para advogado e assistente: o administrador libera pessoa por pessoa.
+- **Dados** em `data/financeiro/` (entra na cópia diária de `data/`): `meses/AAAA-MM.json`, `arquivos/<id>.pdf` (PDF único do BB e cartas da Caixa), `backup/` e `atividade.jsonl`. Nada vai ao GitHub e nada é enviado aos bancos.
+- A página é a mesma do claude.ai; só o `web/adaptador.js` muda (grava na API do THANOS em vez do banco do claude.ai). JSZip e pdf-lib são servidos pelo próprio servidor (sem CDN).
+- Código: `app/financeiro_api.py` (servidor) e `app/static/financeiro/` (tela). Testes: `tests/test_financeiro.py`.

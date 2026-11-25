@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THANOS – Financeiro · RPV Bancos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&display=swap">
+<script src="web/jszip.min.js"></script>
+<script src="web/pdf-lib.min.js"></script>
+<style>
+/* Layout: barra do módulo + etapas em abas; cada etapa é uma área de trabalho com resumo no topo e tabela abaixo */
+:root{
+  --bg:#f5f7f4; --surface:#ffffff; --surface2:#eef2ed; --line:#d7ded5; --fg:#17211b; --muted:#5c6b61;
+  --accent:#1f6b45; --accent-fg:#ffffff; --accent-soft:#e1efe6;
+  --bb:#c9a400; --bb-soft:#fbf3cf; --cef:#1d5fa8; --cef-soft:#e1ecf8;
+  --warn-bg:#fff4cc; --warn-fg:#7a5600; --ok:#1f6b45;
+  --paper:#ffffff; --paper-fg:#111111;
+  --f-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --f-doc:"Bookman Old Style","Libre Baskerville",Georgia,serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --surface:#161e19; --surface2:#1d2721; --line:#2c3831; --fg:#e4ebe6; --muted:#97a69c;
+  --accent:#4fb382; --accent-fg:#06140c; --accent-soft:#1b3326;
+  --bb:#e5c22e; --bb-soft:#3a3214; --cef:#6ea8eb; --cef-soft:#172a40;
+  --warn-bg:#3d3212; --warn-fg:#f2cf6b; --ok:#4fb382;
+  --paper:#f4f4f1; --paper-fg:#111111; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#161e19; --surface2:#1d2721; --line:#2c3831; --fg:#e4ebe6; --muted:#97a69c;
+  --accent:#4fb382; --accent-fg:#06140c; --accent-soft:#1b3326;
+  --bb:#e5c22e; --bb-soft:#3a3214; --cef:#6ea8eb; --cef-soft:#172a40;
+  --warn-bg:#3d3212; --warn-fg:#f2cf6b; --ok:#4fb382;
+  --paper:#f4f4f1; --paper-fg:#111111; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:15px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1180px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding-block:20px 12px}
+.brand{display:flex;gap:12px;align-items:center}
+.gem{width:34px;height:34px;flex:none}
+.brand h1{font-size:20px;margin:0;letter-spacing:.04em;font-weight:600}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.month{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.month output{font-weight:700;color:var(--fg);font-size:15px;letter-spacing:.02em}
+.month{flex-wrap:wrap}
+.month.thanos a.btn{text-decoration:none;font-weight:600;letter-spacing:.06em}
+.month.thanos b{color:var(--fg)}
+select,input[type=search]{font:inherit;font-size:14px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+.demo{background:var(--accent-soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--fg)}
+nav.steps{display:flex;gap:4px;margin-block:16px 18px;border-bottom:1px solid var(--line);overflow-x:auto}
+nav.steps button{font:inherit;font-size:14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center}
+nav.steps button .n{font-family:var(--f-num);font-size:12px;border:1px solid var(--line);border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center}
+nav.steps button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent);font-weight:600}
+nav.steps button[aria-selected=true] .n{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.badge{font-size:11px;background:var(--warn-bg);color:var(--warn-fg);border-radius:10px;padding:1px 7px;font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible,label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-size:14px;border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+h2{font-size:17px;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px;max-width:72ch}
+.pasta{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.pasta-cab{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;margin-bottom:10px}
+.pasta-cab .rot{color:var(--muted);font-size:13px}
+.pasta-cab code{font-family:var(--f-num);font-size:13px;overflow-wrap:anywhere}
+.pasta-itens{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.pasta-itens li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;border-top:1px solid var(--line);padding-top:8px;font-size:14px}
+.pasta-itens li span{color:var(--muted);font-family:var(--f-num);font-size:12px;overflow-wrap:anywhere}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px}
+.drop{background:var(--surface);border:1.5px dashed var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.drop.filled{border-style:solid;border-color:var(--accent)}
+.drop h3{margin:0;font-size:15px}
+.drop .hint{color:var(--muted);font-size:13px}
+.drop ul{margin:0;padding:0;list-style:none;font-family:var(--f-num);font-size:12px;color:var(--muted);max-height:96px;overflow:auto}
+.drop label.btn{align-self:flex-start}
+.drop input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tile .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font-family:var(--f-num);font-size:22px;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .s{font-size:13px;color:var(--muted)}
+.chip{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;border-radius:4px;padding:2px 6px;white-space:nowrap}
+.chip.BB{background:var(--bb-soft);color:var(--fg);box-shadow:inset 3px 0 0 var(--bb)}
+.chip.CEF{background:var(--cef-soft);color:var(--fg);box-shadow:inset 3px 0 0 var(--cef)}
+.chip.suc{background:var(--surface2);color:var(--muted)}
+.tablebox{overflow:auto;max-height:620px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--surface2);position:sticky;top:0;font-weight:600;z-index:1}
+td.num,th.num{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.mono{font-family:var(--f-num);font-size:12px;white-space:nowrap}
+tr.warn td{background:var(--warn-bg)}
+tr.tot td{font-weight:600;background:var(--surface2);position:sticky;bottom:0}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--accent-soft)}
+td input.cell{font:inherit;font-family:var(--f-num);width:110px;text-align:right;background:transparent;border:1px solid var(--line);border-radius:4px;padding:2px 4px;color:var(--fg)}
+td input.cell:focus{border-color:var(--accent);background:var(--surface)}
+td input.txt{font:inherit;font-size:12px;width:100%;min-width:220px;background:transparent;border:1px solid transparent;border-radius:4px;padding:2px 4px;color:var(--fg)}
+td input.txt:hover,td input.txt:focus{border-color:var(--line);background:var(--surface)}
+.why{font-size:12px;color:var(--warn-fg);display:block}
+.docs{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.docs{grid-template-columns:1fr}}
+.doclist{background:var(--surface);border:1px solid var(--line);border-radius:10px;max-height:680px;overflow:auto;min-width:0}
+.doclist button{display:flex;width:100%;gap:8px;justify-content:space-between;align-items:center;text-align:left;font:inherit;font-size:13px;padding:9px 12px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--fg);cursor:pointer}
+.doclist button[aria-current=true]{background:var(--accent-soft);font-weight:600}
+.doclist .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 12px 6px;background:var(--surface2)}
+.paperbox{min-width:0;display:flex;flex-direction:column;gap:10px}
+.paper{background:var(--paper);color:var(--paper-fg);border:1px solid var(--line);border-radius:4px;padding:28px 32px;font-family:var(--f-doc);font-size:14px;line-height:1.55;box-shadow:0 1px 3px rgba(0,0,0,.12);overflow-x:auto}
+.paper .cefhead{display:flex;gap:14px;align-items:baseline;border-bottom:1px solid #999;padding-bottom:6px;margin-bottom:14px;font-family:Arial,Helvetica,sans-serif}
+.paper .cefhead b{font-size:22px;letter-spacing:.02em;color:#005ca9;font-style:italic}
+.paper table{font-size:13px;margin:10px 0;width:100%}
+.paper th,.paper td{border:1px solid #888;color:#111;background:#fff;text-transform:none;letter-spacing:0;font-size:13px;position:static;text-align:center;font-family:var(--f-doc);font-weight:400}
+.paper .hl{background:#fff3b0}
+.bbform{font-family:Arial,Helvetica,sans-serif;font-size:12px}
+.bbform .head{display:flex;gap:10px;align-items:center;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:8px}
+.bbform .logo{width:30px;height:30px;background:#f5d000;display:grid;place-items:center;font-weight:700;color:#1a3d8f;font-size:12px;flex:none}
+.bbform .f{display:inline-block;border:1px solid #9aa;background:#eef3ff;padding:1px 6px;min-width:60px;font-family:var(--f-num);font-size:12px;color:#111}
+.bbform .f.hl{background:#fff3b0;border-color:#c9a400;font-weight:700}
+.bbform .sec{border-top:1px dashed #999;padding:6px 0;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.bbform .x{display:inline-block;width:12px;height:12px;border:1px solid #333;vertical-align:-2px;margin-right:4px;text-align:center;line-height:10px;font-size:10px}
+.note{font-size:13px;color:var(--muted)}
+.confirm{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ok{color:var(--ok);font-weight:600}
+.pend{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.pend li{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn-fg);border-radius:6px;padding:10px 12px;font-size:14px}
+.pend li span{display:block;font-size:12px;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;border:0;background:var(--surface);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg)}
+.arch{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:8px}
+.arch div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.arch b{display:block;margin-bottom:2px;color:var(--fg)}
+.passos{margin:0 0 16px;padding-left:22px;display:grid;gap:6px;font-size:14px;max-width:70ch}
+.passos code,.pasta-itens code{font-family:var(--f-num);font-size:12px}
+.meses{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.meses li{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px}
+.meses li span{color:var(--muted);font-size:12px}
+.meses li[aria-current=true]{border-color:var(--accent)}
+.month select{font:inherit;font-weight:700;font-size:14px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.progress{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;flex:1;min-width:120px}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+section[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.progress i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <svg class="gem" viewBox="0 0 34 34" aria-hidden="true"><polygon points="17,2 31,12 26,31 8,31 3,12" fill="var(--accent)"/><polygon points="17,2 24,12 17,31 10,12" fill="var(--accent-soft)" opacity=".55"/></svg>
+    <div><h1>RPV BANCOS</h1><p>Módulo Financeiro · Joia Verde · THANOS</p></div>
+  </div>
+  <div class="month"><label for="mesSel" class="rot-mes">Mês de referência</label>
+    <select id="mesSel"><option>Carregando…</option></select>
+    <span class="note" id="mesNota"></span></div>
+  <div class="month thanos"><a class="btn" href="/" title="Voltar ao painel do THANOS">THANOS</a><b id="quem"></b></div>
+</header>
+<div class="demo" id="aviso"><b>Dados reais de clientes.</b> Cada mês importado fica salvo no servidor do THANOS e só abre para quem o administrador liberou o Financeiro. Nada aqui é enviado a banco algum.</div>
+
+<nav class="steps" role="tablist" aria-label="Etapas">
+  <button role="tab" id="t-entrada" aria-selected="true" data-tab="entrada"><span class="n">1</span>Entrada</button>
+  <button role="tab" id="t-lev" aria-selected="false" data-tab="lev"><span class="n">2</span>Levantamentos</button>
+  <button role="tab" id="t-docs" aria-selected="false" data-tab="docs"><span class="n">3</span>Pedidos aos bancos</button>
+  <button role="tab" id="t-cont" aria-selected="false" data-tab="cont"><span class="n">4</span>Contabilidade</button>
+  <button role="tab" id="t-pend" aria-selected="false" data-tab="pend"><span class="n">!</span>Pendências <span class="badge" id="pendCount"></span></button>
+</nav>
+
+<section id="entrada">
+  <h2>Importar um mês</h2>
+  <ol class="passos">
+    <li>No computador, rode <b>GERAR RPV BANCOS</b> (e, quando tiver os comprovantes, <b>GERAR CONTABILIDADE</b>). Eles leem a pasta do mês e deixam nela o arquivo <code>RPV BANCOS - mês.ano.zip</code>.</li>
+    <li>Aqui, clique em <b>Selecionar pasta</b> e escolha a pasta do mês, por exemplo <code>RPV's/10.2026</code>.</li>
+    <li>Clique em <b>Importar</b>. O mês é salvo no banco de dados da página e as abas passam a mostrar esse mês.</li>
+  </ol>
+  <div class="pasta">
+    <div class="pasta-cab"><span class="rot">Pasta selecionada</span><code id="pastaOrigem">nenhuma</code>
+      <label class="btn" for="selPasta">Selecionar pasta</label>
+      <input type="file" id="selPasta" webkitdirectory directory multiple hidden></div>
+    <ul class="pasta-itens">
+      <li><b>Relatório de processos (eproc)</b><span id="p1">—</span></li>
+      <li><b>Demonstrativos de pagamento</b><span id="p2">—</span></li>
+      <li><b>Comprovantes de resgate</b><span id="p3">—</span></li>
+      <li><b>Pacote do mês</b><span id="p4">—</span></li>
+    </ul>
+  </div>
+  <div class="row"><button class="btn primary" id="proc" disabled>Importar mês</button><div class="progress" aria-hidden="true"><i id="bar"></i></div><span class="note" id="procMsg">Selecione a pasta do mês.</span></div>
+  <h2 style="margin-top:28px">Meses salvos</h2>
+  <ul class="meses" id="listaMeses"></ul>
+  <h2 style="margin-top:28px">Como o sistema funciona por dentro</h2>
+  <p class="sub">O motor de leitura e geração (Python) roda no computador onde ficam as pastas dos meses e gera o pacote; esta tela, dentro do THANOS, guarda cada mês no servidor.</p>
+  <div class="arch">
+    <div><b>1. Leitura</b>Lê os demonstrativos e separa cada conta judicial. Só entram as contas em nome do escritório (contratuais e sucumbência).</div>
+    <div><b>2. Separação</b>Agrupa por banco e por cliente, com a filial vinda do histórico de pastas.</div>
+    <div><b>3. Pedidos</b>BB: um formulário de resgate por conta. Caixa: carta de autorização com até 5 RPVs.</div>
+    <div><b>4. Contabilidade</b>Lê os comprovantes e monta a prévia mensal por banco, com linhas para ajuste.</div>
+  </div>
+</section>
+
+<section id="lev" hidden>
+  <div class="tiles" id="tiles"></div>
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Banco" id="fBanco">
+      <button aria-pressed="true" data-b="">Todos</button><button aria-pressed="false" data-b="BB">Banco do Brasil</button><button aria-pressed="false" data-b="CEF">Caixa</button>
+    </div>
+    <input type="search" id="busca" placeholder="Buscar cliente ou processo" aria-label="Buscar cliente ou processo">
+  </div>
+  <div class="tablebox"><table id="tLev"><thead><tr><th>Banco</th><th>Cliente</th><th>Filial</th><th>Tipo</th><th>Processo RPV</th><th>Conta judicial</th><th class="num">Valor</th><th>Pedido</th><th>Conferido</th></tr></thead><tbody></tbody></table></div>
+  <p class="note">Clique numa linha para ver o pedido gerado.</p>
+</section>
+
+<section id="docs" hidden>
+  <div class="docs">
+    <div class="doclist" id="docList"></div>
+    <div class="paperbox">
+      <div class="paper" id="paper"></div>
+      <div class="confirm" id="confirmBox"></div>
+    </div>
+  </div>
+</section>
+
+<section id="cont" hidden>
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Banco" id="cBanco"><button aria-pressed="true" data-b="BB">Banco do Brasil</button><button aria-pressed="false" data-b="CEF">Caixa</button></div>
+    <div class="row"><label class="note"><input type="checkbox" id="soConf"> Só linhas para conferir</label><button class="btn" id="addLinha">Adicionar linha de ajuste</button></div>
+  </div>
+  <p class="sub" id="contSub"></p>
+  <div class="tablebox"><table id="tCont"><thead><tr><th>Cliente / favorecido</th><th>CPF/CNPJ</th><th class="num">Capital e rend.</th><th class="num">IR</th><th class="num">Tarifa</th><th class="num">Líquido</th><th>Data</th><th>Observação</th></tr></thead><tbody></tbody></table></div>
+  <p class="note">Valores, IR e observações podem ser editados direto na tabela. As linhas amarelas trazem o motivo da conferência.</p>
+</section>
+
+<section id="pend" hidden>
+  <h2>Pendências</h2>
+  <p class="sub">O que o sistema não conseguiu resolver sozinho e precisa de alguém.</p>
+  <ul class="pend" id="pendList"></ul>
+</section>
+</div>
+<script src="web/adaptador.js"></script>
+<script src="web/app.js"></script>
+</body>
+</html>
