@@ -35,9 +35,9 @@ ID_RX = re.compile(r"^[A-Za-z0-9_.:-]{1,80}$")
 TEXTOS = {  # campo -> tamanho máximo
     "proc": 40, "cliente": 300, "contra": 300, "cpf": 20, "papel": 80, "classe": 300, "assunto": 300,
     "evento": 600, "tipo": 80, "envio": 40, "inicio": 40, "final": 40, "imp": 40, "baixa": 40, "orgao": 80,
-    "trib": 40, "prov": 600, "obs": 6000, "cat": 120,
+    "trib": 40, "prov": 600, "obs": 6000, "cat": 120, "resp": 40,
 }
-CAMPOS_TELA = {"prov", "obs", "edOk", "st", "eq", "eqAuto", "baixa"}  # o que a tela pode mudar num prazo já existente
+CAMPOS_TELA = {"prov", "obs", "edOk", "st", "eq", "eqAuto", "baixa", "resp", "respAuto"}  # o que a tela pode mudar num prazo já existente
 
 
 def _limpa_item(p: dict, so_tela: bool) -> dict:
@@ -54,7 +54,7 @@ def _limpa_item(p: dict, so_tela: bool) -> dict:
             out[k] = "cumprido" if v == "cumprido" else "pendente"
         elif k == "eq":
             out[k] = v if v in (1, 2) and not isinstance(v, bool) else None
-        elif k in ("eqAuto", "edOk"):
+        elif k in ("eqAuto", "edOk", "respAuto"):
             out[k] = bool(v)
         elif k == "dias":
             out[k] = v if isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= 3650 else None
@@ -68,7 +68,7 @@ def _limpa_config(c) -> dict:
         raise HTTPException(400, "Configuração inválida")
     if len(json.dumps(c)) > 1_000_000:
         raise HTTPException(413, "Configuração grande demais")
-    tipos = {"regras": list, "regrasCampo": list, "links": dict, "comarcas": dict, "diasExtras": list, "nomes": dict}
+    tipos = {"regras": list, "regrasCampo": list, "links": dict, "comarcas": dict, "diasExtras": list, "nomes": dict, "pessoas": list}
     out = {}
     for k, t in tipos.items():
         v = c.get(k)
@@ -81,6 +81,16 @@ def _limpa_config(c) -> dict:
         u = str(url or "").strip()
         if u and not re.match(r"^https?://", u, re.I):
             raise HTTPException(400, f"O link de {trib} precisa começar com https://")
+    if "pessoas" in out:  # pessoas de cada equipe: [{id, nome, eq}]
+        pessoas, vistos = [], set()
+        for x in out["pessoas"][:200]:
+            if not isinstance(x, dict) or x.get("eq") not in (1, 2) or isinstance(x.get("eq"), bool):
+                continue
+            pid, nome = str(x.get("id") or "")[:40], str(x.get("nome") or "").strip()[:60]
+            if pid and nome and ID_RX.match(pid) and pid not in vistos:
+                vistos.add(pid)
+                pessoas.append({"id": pid, "nome": nome, "eq": x["eq"]})
+        out["pessoas"] = pessoas
     for k in ("comarcas", "nomes", "links"):
         if k in out:
             out[k] = {str(a)[:80]: str(b or "")[:500] for a, b in out[k].items()}
@@ -186,7 +196,7 @@ def checar(u: User, item, patch, origem) -> str | None:
             return "definir a equipe do prazo"
     if "st" in patch and patch["st"] != (item.get("st") or "pendente") and not pode(u, "baixaManual"):
         return "marcar como cumprido ou reabrir prazos"
-    if any(k in patch for k in ("prov", "obs", "edOk", "st")) and outra and not pode(u, "editarOutra"):
+    if any(k in patch for k in ("prov", "obs", "edOk", "st", "resp")) and outra and not pode(u, "editarOutra"):
         return "editar prazos da outra equipe"
     return None
 

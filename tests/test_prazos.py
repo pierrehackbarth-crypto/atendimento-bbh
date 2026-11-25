@@ -170,3 +170,19 @@ def test_equipe_pela_tela_de_usuarios(admin, env):
     r = admin.patch(f"/api/admin/users/{b['id']}", json={"prazos_equipe": 2})
     assert r.json()["prazos_equipe"] == 2
     assert admin.patch(f"/api/admin/users/{b['id']}", json={"prazos_equipe": 7}).status_code == 400
+
+
+def test_pessoas_e_responsavel(admin):
+    """Pessoas de cada equipe ficam na configuração; cada prazo guarda o responsável (resp) e se é sugestão (respAuto)."""
+    cfg = {"pessoas": [{"id": "p1", "nome": "Pierre", "eq": 2}, {"id": "p2", "nome": " Suyanne ", "eq": 2},
+                       {"id": "x", "nome": "Sem equipe", "eq": 3}, {"id": "p1", "nome": "Repetido", "eq": 1}],
+           "regras": [{"termo": "sentença", "eq": 2, "resp": "p2"}]}
+    assert admin.put("/prazos/api/config", json=cfg).status_code == 200
+    st = admin.get("/prazos/api/estado").json()
+    assert st["config"]["pessoas"] == [{"id": "p1", "nome": "Pierre", "eq": 2}, {"id": "p2", "nome": "Suyanne", "eq": 2}]
+    assert st["config"]["regras"][0]["resp"] == "p2"
+    assert _importa(admin, {"p1": dict(ITEM, resp="p2", respAuto=True)}).status_code == 200
+    r = admin.post(f"/prazos/api/dias/{DIA}", json={"items": {"p1": {"resp": "p1", "respAuto": False, "cliente": "outro"}}})
+    assert r.status_code == 200
+    it = admin.get("/prazos/api/estado").json()["dias"][DIA]["items"]["p1"]
+    assert it["resp"] == "p1" and it["respAuto"] is False and it["cliente"] == "Cliente Teste"
